@@ -9,9 +9,13 @@ import SwiftUI
 
 @main
 struct OpenockApp: App {
+  @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+  
   var body: some Scene {
     WindowGroup {
-      ContentView()
+      LiveCaptionView()
     }
+    .windowStyle(.hiddenTitleBar)
+    .windowToolbarStyle(.unifiedCompact)
   }
 }
