@@ -13,7 +13,7 @@ struct OpenockApp: App {
   
   var body: some Scene {
     WindowGroup {
-      LiveCaptionView()
+      STTView()
     }
     .windowStyle(.hiddenTitleBar)
     .windowToolbarStyle(.unifiedCompact)
