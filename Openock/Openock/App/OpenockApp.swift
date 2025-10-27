@@ -10,10 +10,12 @@ import SwiftUI
 @main
 struct OpenockApp: App {
   @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+  @StateObject private var sttEngine = STTEngine()
   
   var body: some Scene {
     WindowGroup {
       STTView()
+        .environmentObject(sttEngine)
     }
     .windowStyle(.hiddenTitleBar)
     .windowToolbarStyle(.unifiedCompact)

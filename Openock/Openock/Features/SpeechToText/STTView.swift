@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct STTView: View {
-  @StateObject private var sttEngine = STTEngine()
+  @EnvironmentObject var sttEngine: STTEngine
   
   var body: some View {
     ZStack {
@@ -84,4 +84,5 @@ struct STTView: View {
 
 #Preview {
   STTView()
+    .environmentObject(STTEngine())
 }
