@@ -21,7 +21,7 @@ struct MenuBarView: View {
   @State private var fontSize: Double = 24
   @State private var captionBG: AppearanceView.CaptionBG = .black
 
-  // SoundView 상태 (필요시 추가)
+  // SoundAlarmView 상태 (필요시 추가)
   // @State private var soundEnabled: Bool = true
 
   // ShortcutView 상태 (필요시 추가)
@@ -51,7 +51,7 @@ struct MenuBarView: View {
               captionBG: $captionBG
             )
           case .sound:
-            SoundView()
+            SoundAlarmView()
           case .shortcut:
             ShortcutView()
           }
