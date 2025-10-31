@@ -18,6 +18,13 @@ import AVFoundation
 import CoreAudio
 
 // MARK: - Audio Preprocessor
+//
+// 고라파덕 버전임
+//
+// HPF가 120Hz 이하 저음을 자르던 걸 90Hz로 완화
+// 노이즈 게이트는 음성 꼬리를 자를 위험이 있어 기본적으로 끔
+// 스테레오 입력일 경우 (L+R)/2로 모노화하여 중앙(대사)을 강조
+// 정규화는 하지 않음 (PD의 의도, 몰입감 유지)
 
 fileprivate final class AudioPreprocessor {
   private let sampleRate: Double
@@ -28,10 +35,14 @@ fileprivate final class AudioPreprocessor {
   private let hpAlpha: Float
   private var emaRms: Float = 0.0
   private let emaA: Float = 0.95
-  private let gateAttenuation: Float = pow(10.0, -12.0/20.0)
-  private let gateOpenRatio: Float = 2.0
   
-  init(sampleRate: Double, channels: Int, frameMs: Int = 20, hpCutoff: Double = 120.0) {
+  // 게이트 관련 (기본 OFF)
+  private let useNoiseGate: Bool = false
+  private let gateAttenuation: Float = pow(10.0, -6.0/20.0) // -6 dB 정도만 살짝 줄임
+  private let gateOpenRatio: Float = 1.5
+  
+  // 컷오프 완화: 90Hz 기본
+  init(sampleRate: Double, channels: Int, frameMs: Int = 20, hpCutoff: Double = 90.0) {
     self.sampleRate = sampleRate
     self.channels = max(1, channels)
     self.frameSamples = max(1, Int((sampleRate * Double(frameMs)) / 1000.0))
@@ -43,61 +54,160 @@ fileprivate final class AudioPreprocessor {
   }
   
   func process(_ inBuf: AVAudioPCMBuffer) -> AVAudioPCMBuffer {
-    guard let out = AVAudioPCMBuffer(pcmFormat: inBuf.format, frameCapacity: inBuf.frameLength) else { return inBuf }
-    out.frameLength = inBuf.frameLength
-    guard let srcBase = inBuf.floatChannelData, let dstBase = out.floatChannelData else { return inBuf }
-    
     let n = Int(inBuf.frameLength)
-    var idx = 0
-    while idx < n {
-      let end = min(idx + frameSamples, n)
-      let frameCount = end - idx
-      
-      var accum: Float = 0
-      for ch in 0..<channels {
-        let src = srcBase[ch]
-        let dst = dstBase[ch]
-        var prevX = x1[ch]
-        var prevY = y1[ch]
-        let a = hpAlpha
-        var i = idx
-        while i < end {
-          let x = src[i]
-          let y = a * (prevY + x - prevX)
-          dst[i] = y
-          prevX = x
-          prevY = y
-          accum += y*y
-          i += 1
-        }
-        x1[ch] = prevX
-        y1[ch] = prevY
-      }
-      
-      let frameRms = sqrt(accum / Float(frameCount * channels))
-      if frameRms < emaRms * 1.5 || emaRms == 0 {
-        emaRms = emaA * emaRms + (1 - emaA) * frameRms
-      }
-      let openThresh = max(emaRms * gateOpenRatio, 1e-6)
-      let applyGate = frameRms < openThresh
-      
-      if applyGate {
-        for ch in 0..<channels {
-          let dst = dstBase[ch]
-          var i = idx
-          while i < end {
-            dst[i] *= gateAttenuation
-            i += 1
-          }
-        }
-      }
-      
-      idx = end
+    guard n > 0 else { return inBuf }
+
+    // 출력 버퍼 준비 (모노 혹은 동일 포맷 유지)
+    let outFormat: AVAudioFormat
+    if channels > 1 {
+      // 모노화된 포맷 생성
+      outFormat = AVAudioFormat(commonFormat: .pcmFormatFloat32,
+                                sampleRate: inBuf.format.sampleRate,
+                                channels: 1,
+                                interleaved: false)!
+    } else {
+      outFormat = inBuf.format
     }
-    
+
+    guard let out = AVAudioPCMBuffer(pcmFormat: outFormat, frameCapacity: inBuf.frameLength) else {
+      return inBuf
+    }
+    out.frameLength = inBuf.frameLength
+
+    guard let srcBase = inBuf.floatChannelData else { return inBuf }
+    guard let dstBase = out.floatChannelData else { return inBuf }
+
+    // ----- 모노화 (스테레오인 경우에만) -----
+    if channels > 1 {
+      let L = srcBase[0]
+      let R = srcBase[1]
+      let dst = dstBase[0]
+      for i in 0..<n {
+        dst[i] = 0.5 * (L[i] + R[i]) // 중앙 강조
+      }
+    } else {
+      // 모노 입력이면 그대로 복사
+      let src = srcBase[0]
+      let dst = dstBase[0]
+      dst.assign(from: src, count: n)
+    }
+
+    // ----- HPF 적용 (90Hz) -----
+    let a = hpAlpha
+    var prevX: Float = x1[0]
+    var prevY: Float = y1[0]
+    let dst = dstBase[0]
+    for i in 0..<n {
+      let x = dst[i]
+      let y = a * (prevY + x - prevX)
+      dst[i] = y
+      prevX = x
+      prevY = y
+    }
+    x1[0] = prevX
+    y1[0] = prevY
+
+    // ----- Noise Gate (기본 OFF) -----
+    guard useNoiseGate else { return out }
+    var sum: Float = 0
+    for i in 0..<n { sum += dst[i] * dst[i] }
+    let rms = sqrt(sum / Float(n))
+    if rms < emaRms * 1.5 || emaRms == 0 {
+      emaRms = emaA * emaRms + (1 - emaA) * rms
+    }
+    let openThresh = max(emaRms * gateOpenRatio, 1e-6)
+    let applyGate = rms < openThresh
+    if applyGate {
+      for i in 0..<n { dst[i] *= gateAttenuation }
+    }
+
     return out
   }
 }
+
+//// MARK: - Audio Preprocessor
+//
+// 이게 루트 코드 베이스임. 결과물 비교하실 때 주석 바꿔가면서 시도해보십시오 음음!
+//
+//fileprivate final class AudioPreprocessor {
+//  private let sampleRate: Double
+//  private let channels: Int
+//  private let frameSamples: Int
+//  private var x1: [Float]
+//  private var y1: [Float]
+//  private let hpAlpha: Float
+//  private var emaRms: Float = 0.0
+//  private let emaA: Float = 0.95
+//  private let gateAttenuation: Float = pow(10.0, -12.0/20.0)
+//  private let gateOpenRatio: Float = 2.0
+//  
+//  init(sampleRate: Double, channels: Int, frameMs: Int = 20, hpCutoff: Double = 120.0) {
+//    self.sampleRate = sampleRate
+//    self.channels = max(1, channels)
+//    self.frameSamples = max(1, Int((sampleRate * Double(frameMs)) / 1000.0))
+//    self.x1 = Array(repeating: 0, count: self.channels)
+//    self.y1 = Array(repeating: 0, count: self.channels)
+//    let dt = 1.0 / sampleRate
+//    let rc = 1.0 / (2.0 * Double.pi * hpCutoff)
+//    self.hpAlpha = Float(rc / (rc + dt))
+//  }
+//  
+//  func process(_ inBuf: AVAudioPCMBuffer) -> AVAudioPCMBuffer {
+//    guard let out = AVAudioPCMBuffer(pcmFormat: inBuf.format, frameCapacity: inBuf.frameLength) else { return inBuf }
+//    out.frameLength = inBuf.frameLength
+//    guard let srcBase = inBuf.floatChannelData, let dstBase = out.floatChannelData else { return inBuf }
+//    
+//    let n = Int(inBuf.frameLength)
+//    var idx = 0
+//    while idx < n {
+//      let end = min(idx + frameSamples, n)
+//      let frameCount = end - idx
+//      
+//      var accum: Float = 0
+//      for ch in 0..<channels {
+//        let src = srcBase[ch]
+//        let dst = dstBase[ch]
+//        var prevX = x1[ch]
+//        var prevY = y1[ch]
+//        let a = hpAlpha
+//        var i = idx
+//        while i < end {
+//          let x = src[i]
+//          let y = a * (prevY + x - prevX)
+//          dst[i] = y
+//          prevX = x
+//          prevY = y
+//          accum += y*y
+//          i += 1
+//        }
+//        x1[ch] = prevX
+//        y1[ch] = prevY
+//      }
+//      
+//      let frameRms = sqrt(accum / Float(frameCount * channels))
+//      if frameRms < emaRms * 1.5 || emaRms == 0 {
+//        emaRms = emaA * emaRms + (1 - emaA) * frameRms
+//      }
+//      let openThresh = max(emaRms * gateOpenRatio, 1e-6)
+//      let applyGate = frameRms < openThresh
+//      
+//      if applyGate {
+//        for ch in 0..<channels {
+//          let dst = dstBase[ch]
+//          var i = idx
+//          while i < end {
+//            dst[i] *= gateAttenuation
+//            i += 1
+//          }
+//        }
+//      }
+//      
+//      idx = end
+//    }
+//    
+//    return out
+//  }
+//}
 
 // MARK: - Audio IO Manager
 

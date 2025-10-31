@@ -3,6 +3,8 @@
 <plist version="1.0">
 <dict>
 	<key>NSAudioCaptureUsageDescription</key>
-	<string>This app requires access to application audio</string>
+	<string>이 앱은 실시간 자막 생성을 위해 내부 오디오를 캡처합니다. 오디오 데이터는 자막 변환 과정에서만 사용되며, 어떠한 형태로도 저장되지 않습니다.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>이 앱은 음성을 텍스트로 변환하여 실시간 자막을 제공합니다. 음성 인식은 사용자의 기기 내에서 처리되며, 개인정보는 외부로 전송되지 않습니다.</string>
 </dict>
 </plist>
