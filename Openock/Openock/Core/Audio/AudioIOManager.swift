@@ -18,13 +18,12 @@ import AVFoundation
 import CoreAudio
 
 // MARK: - Audio Preprocessor
-//
-// 고라파덕 버전임
-//
-// HPF가 120Hz 이하 저음을 자르던 걸 90Hz로 완화
-// 노이즈 게이트는 음성 꼬리를 자를 위험이 있어 기본적으로 끔
-// 스테레오 입력일 경우 (L+R)/2로 모노화하여 중앙(대사)을 강조
-// 정규화는 하지 않음 (PD의 의도, 몰입감 유지)
+
+// HPF가 120헤르츠(저음) 이하를 잘라내는 역할인데 이걸 완화하겠다
+// 노이즈 게이트는 동적으로 소리 크기 받아서 특정 소리 크기 이하이면 잘라내는 역할인데 이걸 완화하겠다
+// 모노화는 스테레오인 경우가 많고 이 경우 목소리는 센터 배경음은 좌 우 배치인데 왜곡이 적도록 좌 우를 평균내버리는거임
+// 영화, 유튜브, 음악 대부분의 스테레오 오디오는 mid-side 방식임
+// left = mid + side, right = mid - side 그래서 더해서 나누면 중앙 증폭이 될 것 같다 이런 접근임 ㅇㅇ
 
 fileprivate final class AudioPreprocessor {
   private let sampleRate: Double
@@ -125,91 +124,12 @@ fileprivate final class AudioPreprocessor {
   }
 }
 
-//// MARK: - Audio Preprocessor
-//
-// 이게 루트 코드 베이스임. 결과물 비교하실 때 주석 바꿔가면서 시도해보십시오 음음!
-//
-//fileprivate final class AudioPreprocessor {
-//  private let sampleRate: Double
-//  private let channels: Int
-//  private let frameSamples: Int
-//  private var x1: [Float]
-//  private var y1: [Float]
-//  private let hpAlpha: Float
-//  private var emaRms: Float = 0.0
-//  private let emaA: Float = 0.95
-//  private let gateAttenuation: Float = pow(10.0, -12.0/20.0)
-//  private let gateOpenRatio: Float = 2.0
-//  
-//  init(sampleRate: Double, channels: Int, frameMs: Int = 20, hpCutoff: Double = 120.0) {
-//    self.sampleRate = sampleRate
-//    self.channels = max(1, channels)
-//    self.frameSamples = max(1, Int((sampleRate * Double(frameMs)) / 1000.0))
-//    self.x1 = Array(repeating: 0, count: self.channels)
-//    self.y1 = Array(repeating: 0, count: self.channels)
-//    let dt = 1.0 / sampleRate
-//    let rc = 1.0 / (2.0 * Double.pi * hpCutoff)
-//    self.hpAlpha = Float(rc / (rc + dt))
-//  }
-//  
-//  func process(_ inBuf: AVAudioPCMBuffer) -> AVAudioPCMBuffer {
-//    guard let out = AVAudioPCMBuffer(pcmFormat: inBuf.format, frameCapacity: inBuf.frameLength) else { return inBuf }
-//    out.frameLength = inBuf.frameLength
-//    guard let srcBase = inBuf.floatChannelData, let dstBase = out.floatChannelData else { return inBuf }
-//    
-//    let n = Int(inBuf.frameLength)
-//    var idx = 0
-//    while idx < n {
-//      let end = min(idx + frameSamples, n)
-//      let frameCount = end - idx
-//      
-//      var accum: Float = 0
-//      for ch in 0..<channels {
-//        let src = srcBase[ch]
-//        let dst = dstBase[ch]
-//        var prevX = x1[ch]
-//        var prevY = y1[ch]
-//        let a = hpAlpha
-//        var i = idx
-//        while i < end {
-//          let x = src[i]
-//          let y = a * (prevY + x - prevX)
-//          dst[i] = y
-//          prevX = x
-//          prevY = y
-//          accum += y*y
-//          i += 1
-//        }
-//        x1[ch] = prevX
-//        y1[ch] = prevY
-//      }
-//      
-//      let frameRms = sqrt(accum / Float(frameCount * channels))
-//      if frameRms < emaRms * 1.5 || emaRms == 0 {
-//        emaRms = emaA * emaRms + (1 - emaA) * frameRms
-//      }
-//      let openThresh = max(emaRms * gateOpenRatio, 1e-6)
-//      let applyGate = frameRms < openThresh
-//      
-//      if applyGate {
-//        for ch in 0..<channels {
-//          let dst = dstBase[ch]
-//          var i = idx
-//          while i < end {
-//            dst[i] *= gateAttenuation
-//            i += 1
-//          }
-//        }
-//      }
-//      
-//      idx = end
-//    }
-//    
-//    return out
-//  }
-//}
+
 
 // MARK: - Audio IO Manager
+
+// ✅ ADD: 저역(베이스) 레벨 콜백 타입
+typealias LowBandCallback = (Float) -> Void
 
 class AudioIOManager {
   
@@ -226,6 +146,18 @@ class AudioIOManager {
   private var levelCallback: AudioLevelCallback?
   private var bufferCallCount = 0
   var isPaused = false
+
+  // ✅ ADD: 저역(베이스) 레벨 전송용 상태
+  private var lowBandCallback: LowBandCallback?
+  private var lpfEnv: Float = 0
+  private var lpfAlpha: Float = 0
+  private var sampleRateCache: Double = 48000
+
+  // ✅ ADD: 밴드패스(저컷/고컷)용 상태 & 계수
+  private var sigLPF_Low:  Float = 0    // 저컷 기준 LPF 결과
+  private var sigLPF_High: Float = 0    // 고컷 기준 LPF 결과
+  private var lowAlpha:  Float = 0      // 저컷(느린 LPF)
+  private var highAlpha: Float = 0      // 고컷(빠른 LPF)
   
   /// Get the audio format for a given device
   func getDeviceFormat(deviceID: AudioObjectID) -> AVAudioFormat? {
@@ -247,7 +179,7 @@ class AudioIOManager {
     return AVAudioFormat(
       commonFormat: .pcmFormatFloat32,
       sampleRate: streamFormat.mSampleRate,
-      channels: AVAudioChannelCount(streamFormat.mChannelsPerFrame),
+      channels: AVAudioChannelCount(streamFormat.mChannelsPerFrame), // 이게 스테레오일 경우를 저장하고 있는 부분임
       interleaved: false
     )
   }
@@ -309,6 +241,26 @@ class AudioIOManager {
     
     print("✅ [AudioIOManager] Audio IO started successfully")
     return true
+  }
+
+  // ✅ ADD: 저역(베이스) 전용 레벨 콜백과 컷오프 설정  (밴드패스 30~90Hz 근사 + 엔벌로프 평활)
+  func setLowBandMonitoring(callback: @escaping LowBandCallback, lowpassCutoffHz: Double = 150.0) {
+    self.lowBandCallback = callback
+    let fs = max(8_000.0, Double(self.audioFormat?.sampleRate ?? sampleRateCache))
+
+    // 밴드패스 범위(말소리 기본음을 피하기 위해 상한을 낮게 잡음)
+    let fLow:  Double = 30.0   // 저컷(하이패스 역할)
+    let fHigh: Double = 90.0   // 고컷(로우패스 역할)
+
+    // 1-pole LPF 계수: y += α(x - y), α = 1 - exp(-2π f / fs)
+    self.lowAlpha  = Float(1.0 - exp(-2.0 * Double.pi * fLow  / fs))  // 느린 LPF
+    self.highAlpha = Float(1.0 - exp(-2.0 * Double.pi * fHigh / fs))  // 빠른 LPF
+
+    // 엔벌로프 평활(느리게): 6Hz 근처
+    let envHz = 6.0
+    self.lpfAlpha = Float(1.0 - exp(-2.0 * Double.pi * envHz / fs))
+
+    self.sampleRateCache = fs
   }
   
   /// Stop audio IO
@@ -409,6 +361,45 @@ class AudioIOManager {
       let normalizedLevel = max(0.0, min(1.0, (db + 60) / 60))
       
       levelCallback?(normalizedLevel)
+    }
+
+    // ✅ REPLACE: 저역(베이스) 전용 레벨 계산 및 전달 (밴드패스 30~90Hz 근사, 매 10버퍼)
+    if bufferCallCount % 10 == 0,
+       let lowBandCallback = self.lowBandCallback,
+       let srcPtr = pcmBuffer.floatChannelData {
+      
+      let chCount = Int(audioFormat.channelCount)
+      let n = Int(pcmBuffer.frameLength)
+      
+      if chCount >= 2 {
+        let L = srcPtr[0], R = srcPtr[1]
+        for i in 0..<n {
+          // 1) 모노 합성
+          let m = 0.5 * (L[i] + R[i])
+          // 2) 밴드패스 근사: 고컷 LPF - 저컷 LPF
+          sigLPF_Low  += lowAlpha  * (m - sigLPF_Low)   // 저컷(느림)
+          sigLPF_High += highAlpha * (m - sigLPF_High)  // 고컷(빠름)
+          let band = sigLPF_High - sigLPF_Low           // 대략 30~90Hz 성분
+          // 3) 에너지화 후 엔벌로프 평활
+          let e = band * band
+          lpfEnv += lpfAlpha * (e - lpfEnv)
+        }
+      } else {
+        let M = srcPtr[0]
+        for i in 0..<n {
+          sigLPF_Low  += lowAlpha  * (M[i] - sigLPF_Low)
+          sigLPF_High += highAlpha * (M[i] - sigLPF_High)
+          let band = sigLPF_High - sigLPF_Low
+          let e = band * band
+          lpfEnv += lpfAlpha * (e - lpfEnv)
+        }
+      }
+      
+      // 0~1 스케일로 부드럽게 압축 (둔감하게)
+      let k: Float = 10.0
+      let bass = 1.0 - expf(-k * max(0, lpfEnv))
+      let bassClamped = max(0.0, min(1.0, bass))
+      lowBandCallback(bassClamped)
     }
   }
   

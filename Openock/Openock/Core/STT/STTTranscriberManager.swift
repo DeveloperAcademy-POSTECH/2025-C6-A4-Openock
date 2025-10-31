@@ -45,9 +45,9 @@ class STTTranscriberManager: ObservableObject {
 //        reportingOptions: preset.reportingOptions.union([.alternativeTranscriptions]),
 //        attributeOptions: preset.attributeOptions
 //    )
-    transcriber = SpeechTranscriber(locale: Locale(identifier: "ko-KR"), preset: .transcriptionWithAlternatives)
+    transcriber = SpeechTranscriber(locale: Locale(identifier: "en-US"), preset: .transcriptionWithAlternatives)
     print("✅ [STTTranscriberManager] SpeechTranscriber created")
-    
+     
     guard let transcriber = transcriber else {
       print("❌ [STTTranscriberManager] No transcriber available")
       return

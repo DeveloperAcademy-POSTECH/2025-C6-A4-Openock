@@ -6,219 +6,105 @@
 //
 
 import SwiftUI
-import AppKit
 
 struct STTView: View {
   @EnvironmentObject var sttEngine: STTEngine
-  @EnvironmentObject var appDelegate: AppDelegate
-  @State private var showRecordOnly: Bool = false
-  @State private var showControls: Bool = true
-  @State private var hideTimer: Timer?
-  @State private var window: NSWindow?
   
-  @State private var previousFrame: NSRect?
-  @State private var anchorTop: CGFloat?
-  @State private var isAdjusting = false
-  
-  // 자막 수 제한
-  private var transcriptLineCount: Int {
-    max(1, sttEngine.transcript.split(separator: "\n").count)
-  }
-  private let minLineHeight: CGFloat = 32
-  private let maxTranscriptHeight: CGFloat = 200
-  
+  // 자막 반응용 애니메이션 계수
+  @State private var pulseScale: CGFloat = 1.0
+  @State private var pulseOpacity: Double = 1.0
   
   var body: some View {
-    ZStack(alignment: .top) {
-      ScrollView {
-        VStack(alignment: .leading, spacing: 10) {
-          if sttEngine.transcript.isEmpty {
-            VStack(alignment: .center, spacing: 10) {
-              Image(systemName: "text.bubble")
-                .font(.system(size: 40))
-                .foregroundStyle(.gray.opacity(0.5))
-              Text("음성이 인식되면 여기에 표시됩니다...")
-                .foregroundStyle(.gray)
-                .italic()
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 22)
-          } else {
-            Text(sttEngine.transcript)
-              .textSelection(.enabled)
-              .font(.title)
-              .lineSpacing(4)
-          }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding()
-      }
-      .padding(.top, 48)
-      .padding(.horizontal, 8)
-      .frame(
-        minHeight: minLineHeight * CGFloat(transcriptLineCount) + 48,
-        maxHeight: maxTranscriptHeight + 48
-      )
-      .background(
-        RoundedRectangle(cornerRadius: 16, style: .continuous)
-          .fill(.ultraThinMaterial)
-      )
-      .background(
-        Color.clear
-          .glassEffect(.clear, in: .rect)
-      )
-      if showControls {
-        HStack(alignment: .center, spacing: 0) {
-          HStack {
+    ZStack {
+      Color.clear
+        .glassEffect(.clear, in: .rect)
+        .ignoresSafeArea()
+      
+      VStack {
+        HStack {
+          Spacer()
+          if sttEngine.isRecording {
             if sttEngine.isPaused {
-              Text("일시정지")
-                .foregroundStyle(.white)
-                .font(Font.custom("SF Pro", size: 18))
+              Button(action: { sttEngine.resumeRecording() }) {
+                Image(systemName: "play.circle.fill")
+                  .font(.system(size: 28))
+              }
+              .buttonStyle(.borderless)
+              .tint(.green)
+            } else {
+              Button(action: { sttEngine.pauseRecording() }) {
+                Image(systemName: "pause.circle.fill")
+                  .font(.system(size: 28))
+              }
+              .buttonStyle(.borderless)
+              .tint(.orange)
             }
           }
-          .padding(.horizontal, 16)
-          .frame(maxWidth: .infinity, alignment: .leading)
-          
-          HStack(alignment: .center) {
-            Button(action: {
-              if sttEngine.isRecording {
-                sttEngine.isPaused ? sttEngine.resumeRecording() : sttEngine.pauseRecording()
+        }
+        .padding(.trailing, 10)
+        
+        // Transcript display
+        ScrollView {
+          VStack(alignment: .center, spacing: 10) {
+            if sttEngine.transcript.isEmpty {
+              VStack(alignment: .center, spacing: 10) {
+                Image(systemName: "text.bubble")
+                  .font(.system(size: 40))
+                  .foregroundColor(.gray.opacity(0.5))
+                Text("음성이 인식되면 여기에 표시됩니다...")
+                  .foregroundColor(.gray)
+                  .italic()
               }
-            }) {
-              Image(sttEngine.isPaused ? "play_icon" : "pause_icon")
-                .renderingMode(.original)
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .frame(width: 24, height: 24)
-                .frame(width: 36, height: 36)
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.borderless)
-            .tint(.white)
-            .disabled(!sttEngine.isRecording)
-            Button {
-              if sttEngine.isRecording {
-                withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
-                  showRecordOnly.toggle()
+              .frame(maxWidth: .infinity)
+              .padding(.vertical, 40)
+            } else {
+              // 🔹 Reactive Subtitle
+              Text(sttEngine.transcript)
+                .font(.title)
+                .lineSpacing(4)
+                .multilineTextAlignment(.center)
+                // 🔹 오디오 레벨에 따라 크기와 투명도 변화
+                .scaleEffect(pulseScale)
+                .opacity(pulseOpacity)
+                // 🔹 부드러운 애니메이션
+                .animation(.easeOut(duration: 0.15), value: pulseScale)
+//                .onChange(of: sttEngine.audioLevel) { level in
+//                  // 오디오 레벨(0~1)에 따라 반응 범위 조절
+//                  let targetScale = 1.0 + CGFloat(level) * 0.35
+//                  let targetOpacity = 0.8 + Double(level) * 0.2
+//                  
+//                  pulseScale = targetScale
+//                  pulseOpacity = targetOpacity
+//                }
+                // ✅ ADD: 저역(베이스) 레벨에만 반응하는 둠칫 효과
+                .onChange(of: sttEngine.bassLevel) { bass in
+                  let targetScale = 1.0 + CGFloat(bass) * 0.5
+                  let targetOpacity = 0.85 + Double(bass) * 0.3
+                  pulseScale = targetScale
+                  pulseOpacity = targetOpacity
                 }
-              }
-            } label: {
-              Image(showRecordOnly ? "doc_icon_active" : "doc_icon")
-                .renderingMode(.original)
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .frame(width: 24, height: 24)
-                .frame(width: 36, height: 36)
-                .contentShape(Rectangle())
             }
-            .buttonStyle(.borderless)
-            .tint(.white)
-            .disabled(!sttEngine.isRecording)
           }
+          .frame(maxWidth: .infinity, alignment: .center)
+          .onAppear {
+            sttEngine.setupSystemCapture { success in
+              if success {
+                sttEngine.startRecording()
+              } else {
+                print("Error")
+              }
+            }
+          }
+          .padding(.horizontal)
+          .padding(.top, 40)
         }
-        .frame(height: 48)
-        .frame(maxWidth: .infinity)
-        .background(
-          RoundedRectangle(cornerRadius: 16, style: .continuous)
-            .fill(.clear)//ultraThinMaterial)
-        )
-        .padding(.horizontal, 8)
-        .transition(.move(edge: .top).combined(with: .opacity))
-        .animation(.easeInOut(duration: 0.2), value: showControls)
-        .zIndex(1)
+        .cornerRadius(8)
+        .padding()
+        .frame(minHeight: 200)
+        
+        Spacer()
       }
     }
-    .onHover{isHovering in
-      if isHovering {
-        showControlsTemporarily()
-      } else {
-        startHideTimer()
-      }
-    }
-    .onTapGesture {
-      showControlsTemporarily()
-    }
-    .onChange(of: appDelegate.windowDidBecomeKey) {
-      if appDelegate.windowDidBecomeKey {
-        showControlsTemporarily()
-        DispatchQueue.main.async {
-          appDelegate.windowDidBecomeKey = false
-        }
-      }
-    }
-    .onAppear {
-      sttEngine.setupSystemCapture{success in
-        if success {
-          sttEngine.startRecording()
-        } else {
-          print("Error")
-        }
-      }
-    }
-    .onDisappear{
-      hideTimer?.invalidate()
-      hideTimer = nil
-    }
-    .background(
-      WindowAccessor { win in
-        self.window = win
-        if self.previousFrame == nil, let w = win {
-          self.previousFrame = w.frame
-          w.titleVisibility = .hidden
-          w.titlebarAppearsTransparent = true
-          w.styleMask.insert(.fullSizeContentView)
-          w.titlebarSeparatorStyle = .none
-          w.toolbar = nil
-          w.isMovableByWindowBackground = true
-        }
-      }
-    )
-  }
-  private func showControlsTemporarily() {
-    if showControls {
-      hideTimer?.invalidate()
-      startHideTimer()
-      return
-    }
-    withAnimation(.easeInOut(duration: 0.2)) {
-      showControls = true
-    }
-    setTrafficLights(visible: true)
-    hideTimer?.invalidate()
-    startHideTimer()
-  }
-  private func startHideTimer() {
-    hideTimer?.invalidate()
-    hideTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: false) { _ in
-      if self.showControls {
-        withAnimation(.easeInOut(duration: 0.2)) {
-          self.showControls = false
-        }
-      }
-      self.setTrafficLights(visible: false)
-    }
-  }
-  private func setTrafficLights(visible: Bool) {
-    guard let w = window else { return }
-    let types: [NSWindow.ButtonType] = [.closeButton, .miniaturizeButton, .zoomButton]
-    for t in types {
-      if let btn = w.standardWindowButton(t) {
-        btn.isHidden = !visible
-      }
-    }
-  }
-}
-struct WindowAccessor: NSViewRepresentable {
-  var onResolve: (NSWindow?) -> Void
-  func makeNSView(context: Context) -> NSView {
-    let view = NSView()
-    DispatchQueue.main.async {
-      onResolve(view.window)
-    }
-    return view
-  }
-  func updateNSView(_ nsView: NSView, context: Context) {
-    //DispatchQueue.main.async { onResolve(nsView.window)}
   }
 }
 

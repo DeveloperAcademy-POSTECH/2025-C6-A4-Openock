@@ -29,6 +29,7 @@ class STTEngine: NSObject, ObservableObject {
   @Published var errorMessage: String?
   @Published var audioLevel: Float = 0.0
   @Published var isReceivingAudio = false
+  @Published var bassLevel: Float = 0.0   // ✅ ADD: 저역(베이스) 레벨
   
   // MARK: - Manager Components
   
@@ -104,6 +105,13 @@ class STTEngine: NSObject, ObservableObject {
       )
       
       if success {
+        // ✅ ADD: 저역(베이스) 레벨 모니터링 설정 (컷오프 기본 150 Hz)
+        self.ioManager.setLowBandMonitoring(callback: { [weak self] bass in
+          DispatchQueue.main.async {
+            self?.bassLevel = bass
+          }
+        }, lowpassCutoffHz: 150.0)
+        
         print("✅ [STTEngine] Recording started successfully")
         DispatchQueue.main.async {
           self.isRecording = true
