@@ -16,9 +16,11 @@ struct OpenockApp: App {
     WindowGroup {
       STTView()
         .environmentObject(sttEngine)
+        .frame(minWidth: 600, minHeight: 200)
     }
     .windowStyle(.hiddenTitleBar)
     .windowToolbarStyle(.unifiedCompact)
+    .defaultSize(width: 800, height: 300)
 
     MenuBarExtra("Openock", systemImage: "character.bubble") {
       MenuBarView()
