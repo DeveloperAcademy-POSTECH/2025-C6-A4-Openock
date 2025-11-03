@@ -9,18 +9,6 @@ import SwiftUI
 
 struct AppearanceView: View {
   @EnvironmentObject var settings: SettingsManager
-  
-  enum FontChoice: String, CaseIterable {
-    case sfPro = "SF Pro"
-    case noto = "Noto Serif KR"
-    
-    var displayText: String {
-      switch self {
-      case .sfPro: return "이것은 SF Pro 입니다."
-      case .noto: return "이것은 Noto Serif KR 입니다."
-      }
-    }
-  }
 
   private let sizeRange: ClosedRange<CGFloat> = 18...64
 
@@ -41,40 +29,48 @@ struct AppearanceView: View {
   }
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 0) {
+    VStack(alignment: .leading, spacing: 8) {
       // 서체
       VStack(alignment: .leading, spacing: 6) {
         Text("서체")
           .font(.system(size: 11))
           .fontWeight(.semibold)
-
-        Form {
-          Section {
-            ForEach(FontChoice.allCases, id: \.self) { option in
+        
+        ScrollView {
+          VStack(alignment: .leading, spacing: 6) {
+            // 시스템 설치 폰트들
+            ForEach(NSFontManager.installedFontNames, id: \.self) { fontName in
               Button {
-                settings.selectedFont = option.rawValue
+                settings.selectedFont = fontName
                 settings.save()
               } label: {
                 HStack(spacing: 12) {
                   Image(systemName: "checkmark")
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(settings.selectedFont == option.rawValue ? Color.accentColor : Color.clear)
+                    .foregroundStyle(settings.selectedFont == fontName ? Color.accentColor : Color.clear)
                     .frame(width: 16)
-
-                  Text(option.displayText)
-                    .font(.system(size: 13, weight: .regular))
+                  
+                  Text("이것은 \(fontName) 입니다.")
+                    .font(Font.custom(fontName, size: 13))
                     .foregroundStyle(.primary)
-
+                  
                   Spacer()
                 }
+                .padding(.vertical, 6)
+                .contentShape(Rectangle())
               }
               .buttonStyle(.plain)
             }
           }
+          .padding(16)
+          .background(Color(NSColor.quaternaryLabelColor).opacity(0.1))
+          .clipShape(RoundedRectangle(cornerRadius: 8))
+          .overlay(
+            RoundedRectangle(cornerRadius: 8)
+              .stroke(Color(NSColor.separatorColor), lineWidth: 0.5)
+          )
         }
-        .formStyle(.grouped)
-        .padding(.horizontal, -24)
-        .padding(.vertical, -24)
+        .frame(maxHeight: 200)
       }
 
       // 크기
