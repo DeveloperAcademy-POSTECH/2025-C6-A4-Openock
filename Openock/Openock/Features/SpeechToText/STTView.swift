@@ -9,12 +9,16 @@ import SwiftUI
 
 struct STTView: View {
   @EnvironmentObject var sttEngine: STTEngine
+  @EnvironmentObject var settings: SettingsManager
+  
   
   var body: some View {
     ZStack {
-      Color.clear
+      settings.backgroundColor
+        .id(settings.selectedBackground)
         .glassEffect(.clear, in: .rect)
         .ignoresSafeArea()
+        .animation(.easeInOut(duration: 0.25), value: settings.selectedBackground)
       
       VStack {
         HStack {
@@ -48,15 +52,17 @@ struct STTView: View {
                   .font(.system(size: 40))
                   .foregroundColor(.gray.opacity(0.5))
                 Text("음성이 인식되면 여기에 표시됩니다...")
-                  .foregroundColor(.gray)
-                  .italic()
+                  .font(Font.custom(settings.selectedFont, size: settings.fontSize))
+                  .foregroundColor(settings.textColor.opacity(0.7))
+                .italic()
               }
               .frame(maxWidth: .infinity)
               .padding(.vertical, 40)
             } else {
               Text(sttEngine.transcript)
                 .textSelection(.enabled)
-                .font(.title)
+                .font(Font.custom(settings.selectedFont, size: settings.fontSize))
+                .foregroundStyle(settings.textColor)
                 .lineSpacing(4)
             }
           }
@@ -85,4 +91,5 @@ struct STTView: View {
 #Preview {
   STTView()
     .environmentObject(STTEngine())
+    .environmentObject(SettingsManager())
 }

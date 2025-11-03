@@ -9,7 +9,7 @@ import SwiftUI
 
 struct ShortcutView: View {
   // MARK: - State
-  @State private var isShortcutEnabled: Bool = true
+  @EnvironmentObject var settings: SettingsManager
 
   var body: some View {
     VStack(alignment: .leading, spacing: 12) {
@@ -34,10 +34,11 @@ struct ShortcutView: View {
                 Text("K")
                   .font(.system(size: 12, weight: .semibold, design: .monospaced))
               }
-
-              Toggle("", isOn: $isShortcutEnabled)
-                .toggleStyle(.switch)
-                .labelsHidden()
+              
+              Toggle("", isOn: $settings.isShortcutEnabled)
+                .onChange(of: settings.isShortcutEnabled) {
+                  settings.save()
+                }
             }
           }
         }
@@ -53,3 +54,4 @@ struct ShortcutView: View {
 #Preview {
   ShortcutView()
 }
+

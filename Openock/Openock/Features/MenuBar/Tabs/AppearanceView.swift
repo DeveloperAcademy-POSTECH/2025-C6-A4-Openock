@@ -8,22 +8,37 @@
 import SwiftUI
 
 struct AppearanceView: View {
+  @EnvironmentObject var settings: SettingsManager
+  
   enum FontChoice: String, CaseIterable {
-    case sfPro = "이것은 SF Pro 입니다."
-    case noto = "이것은 Noto Serif KR 입니다."
+    case sfPro = "SF Pro"
+    case noto = "Noto Serif KR"
+    
+    var displayText: String {
+      switch self {
+      case .sfPro: return "이것은 SF Pro 입니다."
+      case .noto: return "이것은 Noto Serif KR 입니다."
+      }
+    }
   }
-  @State private var fontChoice: FontChoice = .sfPro
 
-  @State private var fontSize: Double = 24
-  private let sizeRange: ClosedRange<Double> = 18...64
+  private let sizeRange: ClosedRange<CGFloat> = 18...64
 
   enum CaptionBG: String, CaseIterable {
     case black = "블랙"
     case white = "화이트"
     case clear = "투명"
     case custom = "커스텀"
+    
+    var bgKey: String {
+      switch self {
+      case .black: return "black"
+      case .white: return "white"
+      case .clear: return "clear"
+      case .custom: return "custom"
+      }
+    }
   }
-  @State private var captionBG: CaptionBG = .black
 
   var body: some View {
     VStack(alignment: .leading, spacing: 0) {
@@ -37,15 +52,16 @@ struct AppearanceView: View {
           Section {
             ForEach(FontChoice.allCases, id: \.self) { option in
               Button {
-                fontChoice = option
+                settings.selectedFont = option.rawValue
+                settings.save()
               } label: {
                 HStack(spacing: 12) {
                   Image(systemName: "checkmark")
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(fontChoice == option ? Color.accentColor : Color.clear)
+                    .foregroundStyle(settings.selectedFont == option.rawValue ? Color.accentColor : Color.clear)
                     .frame(width: 16)
 
-                  Text(option.rawValue)
+                  Text(option.displayText)
                     .font(.system(size: 13, weight: .regular))
                     .foregroundStyle(.primary)
 
@@ -73,14 +89,17 @@ struct AppearanceView: View {
               .font(.system(size: 11))
               .foregroundStyle(.secondary)
             Spacer()
-            Text("\(Int(fontSize))pt")
+            Text("\(Int(settings.fontSize))pt")
               .font(.system(size: 12, weight: .semibold))
             Spacer()
             Text("크게")
               .font(.system(size: 20))
               .foregroundStyle(.secondary)
           }
-          Slider(value: $fontSize, in: sizeRange, step: 16)
+          Slider(value: $settings.fontSize, in: sizeRange, step: 16)
+            .onChange(of: settings.fontSize) {
+              settings.save()
+            }
         }
         .padding(16)
         .background(Color(NSColor.quaternaryLabelColor).opacity(0.1))
@@ -106,22 +125,25 @@ struct AppearanceView: View {
             HStack(spacing: 8) {
               ForEach(CaptionBG.allCases, id: \.self) { option in
                 Button {
-                  captionBG = option
+                  settings.selectedBackground = option.rawValue
+                  print(settings.selectedBackground)
+                  settings.save()
                 } label: {
                   VStack(spacing: 4) {
                     ZStack {
-                      if option == .black {
+                      switch option {
+                      case .black:
                         Color.black
                         Text("가").foregroundStyle(.white)
-                      } else if option == .white {
+                      case .white:
                         Color.white
                         Text("가").foregroundStyle(.black)
-                      } else if option == .clear {
-                        Color.clear
+                      case .clear:
+                        Color.clear.glassEffect(.clear, in: .containerRelative)
                         Text("가").foregroundStyle(.gray)
-                      } else {
+                      case .custom:
                         Color.pink.opacity(0.3)
-                        Text("가").foregroundStyle(.primary)
+                        Text("가").foregroundStyle(.red)
                       }
                     }
                     .font(.system(size: 20, weight: .semibold))
@@ -129,7 +151,7 @@ struct AppearanceView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 8))
                     .overlay(
                       RoundedRectangle(cornerRadius: 8)
-                        .stroke(captionBG == option ? Color.accentColor : Color.gray.opacity(0.3), lineWidth: captionBG == option ? 2 : 1)
+                        .stroke(settings.selectedBackground == option.rawValue ? Color.accentColor : Color.gray.opacity(0.3), lineWidth: settings.selectedBackground == option.rawValue ? 2 : 1)
                     )
 
                     Text(option.rawValue)
@@ -156,4 +178,5 @@ struct AppearanceView: View {
 
 #Preview {
   AppearanceView()
+    .environmentObject(SettingsManager())
 }
