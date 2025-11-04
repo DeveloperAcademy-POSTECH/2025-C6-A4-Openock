@@ -48,7 +48,7 @@ struct STTView: View {
         .ignoresSafeArea()
         .animation(.easeInOut(duration: 0.25), value: settings.selectedBackground)
       
-      VStack {
+      VStack(spacing: 0) {
         HStack {
           Spacer()
           if sttEngine.isRecording {
@@ -90,7 +90,6 @@ struct STTView: View {
             VStack(alignment: .leading, spacing: 0) {
               Spacer(minLength: 0)
               Text(sttEngine.transcript)
-                .textSelection(.enabled)
                 .font(Font.custom(settings.selectedFont, size: settings.fontSize))
                 .foregroundStyle(settings.textColor)
                 .lineSpacing(lineSpacing)
@@ -99,18 +98,9 @@ struct STTView: View {
             }
             .frame(width: geometry.size.width, height: geometry.size.height, alignment: .bottom)
             .clipped()
-            .onAppear {
-              sttEngine.setupSystemCapture { success in
-                if success {
-                  sttEngine.startRecording()
-                } else {
-                  print("Error")
-                }
-              }
-            }
-            .padding()
-            .padding(.bottom, 20)
           }
+          .padding()
+          .padding(.bottom, 20)
         }
       }
     }
