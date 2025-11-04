@@ -9,6 +9,7 @@ import SwiftUI
 
 struct STTView: View {
   @EnvironmentObject var sttEngine: STTEngine
+  @EnvironmentObject var settings: SettingsManager
   @State private var isExpanded = false
 
   private let lineSpacing: CGFloat = 4
@@ -38,14 +39,16 @@ struct STTView: View {
     window.setFrame(newFrame, display: true, animate: true)
     isExpanded.toggle()
   }
-
+  
   var body: some View {
     ZStack {
-      Color.clear
+      settings.backgroundColor
+        .id(settings.selectedBackground)
         .glassEffect(.clear, in: .rect)
         .ignoresSafeArea()
-
-      VStack(spacing: 0) {
+        .animation(.easeInOut(duration: 0.25), value: settings.selectedBackground)
+      
+      VStack {
         HStack {
           Spacer()
           if sttEngine.isRecording {
@@ -68,7 +71,6 @@ struct STTView: View {
         }
         .padding(.trailing, 10)
         .padding(.top, 10)
-
         // Transcript display - starts from bottom
         if sttEngine.transcript.isEmpty {
           Spacer()
@@ -87,19 +89,29 @@ struct STTView: View {
             VStack(alignment: .leading, spacing: 0) {
               Spacer(minLength: 0)
               Text(sttEngine.transcript)
-                .font(.title)
+                .textSelection(.enabled)
+                .font(Font.custom(settings.selectedFont, size: settings.fontSize))
+                .foregroundStyle(settings.textColor)
                 .lineSpacing(lineSpacing)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .fixedSize(horizontal: false, vertical: true)
             }
             .frame(width: geometry.size.width, height: geometry.size.height, alignment: .bottom)
             .clipped()
+            .onAppear {
+              sttEngine.setupSystemCapture { success in
+                if success {
+                  sttEngine.startRecording()
+                } else {
+                  print("Error")
+                }
+              }
+            }
+            .padding()
+            .padding(.bottom, 20)
           }
-          .padding()
-          .padding(.bottom, 20)
         }
       }
-    }
     .contentShape(Rectangle())
     .onTapGesture(count: 2) {
       toggleWindowHeight()
@@ -119,4 +131,5 @@ struct STTView: View {
 #Preview {
   STTView()
     .environmentObject(STTEngine())
+    .environmentObject(SettingsManager())
 }

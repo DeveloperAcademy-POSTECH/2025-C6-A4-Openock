@@ -10,8 +10,7 @@ import SwiftUI
 struct MenuBarView: View {
   enum Tab: String, CaseIterable {
     case appearance = "배경 및 글씨"
-    case sound = "소리 알림"
-    case shortcut = "단축키"
+//    case shortcut = "단축키"
   }
 
   @State private var tab: Tab = .appearance
@@ -34,11 +33,9 @@ struct MenuBarView: View {
         VStack(alignment: .leading, spacing: 0) {
           switch tab {
           case .appearance:
-            AppearanceView()
-          case .sound:
-            SoundAlarmView()
-          case .shortcut:
-            ShortcutView()
+            AppearanceView(onSelect: {})
+//          case .shortcut:
+//            ShortcutView()
           }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -64,11 +61,11 @@ private struct Header: View {
         .font(.system(size: 11, weight: .semibold))
         .padding(.vertical, 4)
 
-      HStack {
-        Spacer()
-        Image(systemName: "house")
-          .font(.system(size: 13))
-      }
+//      HStack {
+//        Spacer()
+//        Image(systemName: "house")
+//          .font(.system(size: 13))
+//      }
     }
     .frame(height: 28)
   }
