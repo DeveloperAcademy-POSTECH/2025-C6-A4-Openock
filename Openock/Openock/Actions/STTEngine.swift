@@ -183,18 +183,17 @@ class STTEngine: NSObject, ObservableObject {
   }
   
   // MARK: - Observation
-  
-  /// Observe changes from TranscriberManager
   private func observeTranscriber() {
     // Observe transcript changes
     transcriberManager.$transcript
       .sink { [weak self] newTranscript in
+        guard let self = self else { return }
         DispatchQueue.main.async {
-          self?.transcript = newTranscript
+          self.transcript = self.formatTranscript(newTranscript)
         }
       }
       .store(in: &cancellables)
-    
+
     // Observe error messages
     transcriberManager.$errorMessage
       .sink { [weak self] newError in
@@ -210,5 +209,19 @@ class STTEngine: NSObject, ObservableObject {
   deinit {
     print("🗑️ [STTEngine] Deallocating...")
     stopRecording()
+  }
+  
+  // MARK: - STT Post-processing
+  private func formatTranscript(_ text: String) -> String {
+    guard !text.isEmpty else { return "" }
+
+    // 문장부호(., ?, !, ~, …) 뒤에서 줄바꿈
+    let formatted = text.replacingOccurrences(
+      of: "([.!?~…])\\s*",
+      with: "$1\n",
+      options: .regularExpression
+    )
+
+    return formatted.trimmingCharacters(in: .whitespacesAndNewlines)
   }
 }
