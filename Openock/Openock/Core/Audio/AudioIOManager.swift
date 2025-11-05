@@ -89,7 +89,7 @@ fileprivate final class AudioPreprocessor {
       // 모노 입력이면 그대로 복사
       let src = srcBase[0]
       let dst = dstBase[0]
-      dst.assign(from: src, count: n)
+      dst.update(from: src, count: n)
     }
 
     // ----- HPF 적용 (90Hz) -----

@@ -7,9 +7,31 @@
 
 import SwiftUI
 
+private struct MainWinConfigurator: NSViewRepresentable {
+  @EnvironmentObject var windowManager: WindowManager
+  
+  func makeNSView(context: Context) -> NSView {
+    let v = NSView()
+    DispatchQueue.main.async {
+      if let w = v.window {
+        // ⭐️ STT 창을 WindowManager에 저장
+        WindowManager.shared.sttWindow = w
+      }
+    }
+    return v
+  }
+  func updateNSView(_ nsView: NSView, context: Context) {}
+}
+
 struct STTView: View {
   @EnvironmentObject var sttEngine: STTEngine
   @EnvironmentObject var settings: SettingsManager
+  @EnvironmentObject var windowManager: WindowManager
+  
+  @StateObject private var analyzer = ContextAnalyzer()
+  @EnvironmentObject var overlay: OverlayManager
+  @Environment(\.openWindow) private var openWindow
+  @Environment(\.dismissWindow) private var dismissWindow
   
   
   var body: some View {
@@ -54,7 +76,7 @@ struct STTView: View {
                 Text("음성이 인식되면 여기에 표시됩니다...")
                   .font(Font.custom(settings.selectedFont, size: settings.fontSize))
                   .foregroundColor(settings.textColor.opacity(0.7))
-                .italic()
+                  .italic()
               }
               .frame(maxWidth: .infinity)
               .padding(.vertical, 40)
@@ -68,6 +90,7 @@ struct STTView: View {
           }
           .frame(maxWidth: .infinity, alignment: .leading)
           .onAppear {
+            analyzer.subscribeToAnalysis(overlay: overlay, openWindow: openWindow, dismissWindow: dismissWindow)
             sttEngine.setupSystemCapture { success in
               if success {
                 sttEngine.startRecording()
@@ -81,10 +104,14 @@ struct STTView: View {
         .cornerRadius(8)
         .padding()
         .frame(minHeight: 200)
+        .onChange(of: sttEngine.transcript) { oldValue, newValue in
+          analyzer.updateTranscript(newValue)
+        }
         
         Spacer()
       }
     }
+    .background(MainWinConfigurator())
   }
 }
 
@@ -92,4 +119,5 @@ struct STTView: View {
   STTView()
     .environmentObject(STTEngine())
     .environmentObject(SettingsManager())
+    .environmentObject(OverlayManager())
 }

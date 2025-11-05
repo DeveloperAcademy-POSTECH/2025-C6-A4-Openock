@@ -121,7 +121,16 @@ class AudioCaptureManager {
     var tapArray = [tapUIDString] as CFArray
     let tapArraySize = UInt32(MemoryLayout<CFArray>.stride)
     
-    let status = AudioObjectSetPropertyData(deviceID, &tapListAddress, 0, nil, tapArraySize, &tapArray)
+    let tapArrayPointer = Unmanaged.passUnretained(tapArray).toOpaque()
+    
+    let status = AudioObjectSetPropertyData(
+      deviceID,
+      &tapListAddress,
+      0,
+      nil,
+      tapArraySize,
+      &tapArray
+    )
     
     guard status == kAudioHardwareNoError else {
       print("❌ [AudioCaptureManager] Failed to add tap to aggregate device: \(status)")
