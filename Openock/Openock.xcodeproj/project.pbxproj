@@ -6,6 +6,19 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXCopyFilesBuildPhase section */
+		AC238B532EBA16BC004643C7 /* Embed Libraries */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+			);
+			name = "Embed Libraries";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		3E887E442EADB7DE00A33566 /* Openock.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Openock.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -20,11 +33,25 @@
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
+/* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+		AC238B542EBA16BC004643C7 /* Exceptions for "Openock" folder in "Embed Libraries" phase from "Openock" target */ = {
+			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
+			attributesByRelativePath = {
+				ThirdParty/TFLite/lib/libtensorflowlite_c.dylib = (CodeSignOnCopy, );
+			};
+			buildPhase = AC238B532EBA16BC004643C7 /* Embed Libraries */;
+			membershipExceptions = (
+				ThirdParty/TFLite/lib/libtensorflowlite_c.dylib,
+			);
+		};
+/* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		3E887E462EADB7DE00A33566 /* Openock */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				3E887F9A2EAE02E600A33566 /* Exceptions for "Openock" folder in "Openock" target */,
+				AC238B542EBA16BC004643C7 /* Exceptions for "Openock" folder in "Embed Libraries" phase from "Openock" target */,
 			);
 			path = Openock;
 			sourceTree = "<group>";
@@ -68,6 +95,7 @@
 				3E887E402EADB7DE00A33566 /* Sources */,
 				3E887E412EADB7DE00A33566 /* Frameworks */,
 				3E887E422EADB7DE00A33566 /* Resources */,
+				AC238B532EBA16BC004643C7 /* Embed Libraries */,
 			);
 			buildRules = (
 			);
@@ -267,19 +295,25 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = V5P96PUR94;
-				DEVELOPMENT_TEAM = M48446ADTD;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/Openock/ThirdParty/TFLite/**";
 				INFOPLIST_FILE = Openock/Info.plist;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(PROJECT_DIR)/Openock/ThirdParty/TFLite/lib/**",
+					"$(PROJECT_DIR)/Openock/ThirdParty/TFLite/lib/**",
+					"$(PROJECT_DIR)/Openock/ThirdParty/TFLite/lib",
+				);
 				MARKETING_VERSION = 0.0.1;
+				OTHER_LDFLAGS = "-ltensorflowlite_c";
 				PRODUCT_BUNDLE_IDENTIFIER = com.mjiju06.Openock;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
@@ -301,19 +335,25 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = V5P96PUR94;
-				DEVELOPMENT_TEAM = M48446ADTD;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/Openock/ThirdParty/TFLite/**";
 				INFOPLIST_FILE = Openock/Info.plist;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(PROJECT_DIR)/Openock/ThirdParty/TFLite/lib/**",
+					"$(PROJECT_DIR)/Openock/ThirdParty/TFLite/lib/**",
+					"$(PROJECT_DIR)/Openock/ThirdParty/TFLite/lib",
+				);
 				MARKETING_VERSION = 0.0.1;
+				OTHER_LDFLAGS = "-ltensorflowlite_c";
 				PRODUCT_BUNDLE_IDENTIFIER = com.mjiju06.Openock;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;

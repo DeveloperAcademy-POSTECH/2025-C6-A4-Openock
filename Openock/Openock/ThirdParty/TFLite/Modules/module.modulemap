@@ -1,0 +1,7 @@
+module TFLiteC [system] {
+    header "../tensorflow/lite/c/c_api.h"
+    header "../tensorflow/lite/core/c/types.h"
+    header "../tensorflow/lite/core/c/common.h"
+    header "../tensorflow/lite/c/c_api_experimental.h"
+    export *
+}

@@ -10,13 +10,13 @@ import SwiftUI
 @main
 struct OpenockApp: App {
   @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
-  @StateObject private var sttEngine = STTEngine()
-  @StateObject private var settings = SettingsManager()
+  @StateObject private var pipeline = AudioPipeline()
+    @StateObject private var settings  = SettingsManager()
 
   var body: some Scene {
     WindowGroup {
       STTView()
-        .environmentObject(sttEngine)
+        .environmentObject(pipeline)    // ✅ 추가
         .environmentObject(settings)
     }
     .windowStyle(.hiddenTitleBar)
