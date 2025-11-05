@@ -123,16 +123,16 @@ class STTTranscriberManager: ObservableObject {
         print("📝 [STTTranscriberManager] Result #\(resultCount) - isFinal: \(result.isFinal), text length: \(result.text.characters.count)")
 
         if result.isFinal {
-          let originalText = String(result.text.characters)
+          let originalText = String(result.text.characters).trimmingCharacters(in: .whitespacesAndNewlines)
 
           // 디버그: 원본 STT 결과 출력
           print("🎤 [STTTranscriberManager] STT 원본: '\(originalText)'")
 
           // Foundation Models로 텍스트 개선 (타임아웃 처리)
-          let improvedText: String
+          let rawImprovedText: String
           if #available(macOS 15.1, *), enableAIImprovement, !originalText.isEmpty {
             // 타임아웃 5초 설정
-            improvedText = await withTimeout(seconds: 5) {
+            rawImprovedText = await withTimeout(seconds: 5) {
               do {
                 // 최근 5문장의 맥락을 전달
                 let contextString = self.recentContextSentences.isEmpty ? nil : self.recentContextSentences.joined(separator: " ")
@@ -142,12 +142,6 @@ class STTTranscriberManager: ObservableObject {
                   previousContext: contextString
                 )
 
-                // 변경 사항 표시
-                if result != originalText {
-                  print("✨ [STTTranscriberManager] AI 교정: '\(originalText)' → '\(result)'")
-                } else {
-                  print("✅ [STTTranscriberManager] AI 판단: 수정 불필요")
-                }
                 return result
               } catch {
                 print("⚠️ [STTTranscriberManager] AI improvement failed: \(error)")
@@ -155,12 +149,27 @@ class STTTranscriberManager: ObservableObject {
               }
             } ?? originalText  // 타임아웃 시 원본 사용
           } else {
-            improvedText = originalText
+            rawImprovedText = originalText
             print("⏭️ [STTTranscriberManager] AI 교정 비활성화됨")
           }
 
+          // Normalize: trim & remove extra spaces for comparison
+          let improvedText = rawImprovedText.trimmingCharacters(in: .whitespacesAndNewlines)
+          let normalizedOriginal = originalText.trimmingCharacters(in: .whitespacesAndNewlines)
+          let normalizedImproved = improvedText.trimmingCharacters(in: .whitespacesAndNewlines)
+
+          // Check if actually changed
+          let hasChanged = normalizedOriginal != normalizedImproved
+
+          // 변경 사항 표시
+          if hasChanged {
+            print("✨ [STTTranscriberManager] AI 교정: '\(originalText)' → '\(improvedText)'")
+          } else {
+            print("✅ [STTTranscriberManager] AI 판단: 수정 불필요")
+          }
+
           // 디버그 모드: 원본과 개선본을 함께 표시
-          if debugMode && improvedText != originalText {
+          if debugMode && hasChanged {
             finalized += AttributedString("[원본: \(originalText)] \(improvedText)\n")
           } else {
             finalized += AttributedString(improvedText)
