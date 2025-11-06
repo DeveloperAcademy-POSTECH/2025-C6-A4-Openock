@@ -34,9 +34,44 @@ struct STTView: View {
         .ignoresSafeArea()
         .animation(.easeInOut(duration: 0.25), value: settings.selectedBackground)
 
+      // Whistle detection icon overlay
+      if sttEngine.isWhistleDetected {
+        VStack {
+          HStack {
+            Spacer()
+            Image(systemName: "speaker.wave.3.fill")
+              .font(.system(size: 50))
+              .foregroundColor(.yellow)
+              .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
+              .padding(.trailing, 20)
+              .padding(.top, 60)
+          }
+          Spacer()
+        }
+        .transition(.scale.combined(with: .opacity))
+        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: sttEngine.isWhistleDetected)
+      }
+
       VStack(spacing: 0) {
-        // 상단 컨트롤 (녹음/일시정지)
+        // Whistle detection debug info (top)
         HStack {
+          VStack(alignment: .leading, spacing: 2) {
+            Text("🎯 S1: \(String(format: "%.2f", sttEngine.stage1Probability))")
+              .font(.system(size: 10, design: .monospaced))
+              .foregroundColor(sttEngine.stage1Probability >= 0.50 ? .green : .gray)
+            Text("🎯 S2: \(String(format: "%.2f", sttEngine.stage2Probability))")
+              .font(.system(size: 10, design: .monospaced))
+              .foregroundColor(sttEngine.stage2Probability >= 0.20 ? .green : .gray)
+            Text("🔊 Energy: \(String(format: "%.4f", sttEngine.audioEnergy))")
+              .font(.system(size: 10, design: .monospaced))
+              .foregroundColor(.gray)
+            Text("🎼 Freq: \(String(format: "%.0f", sttEngine.dominantFrequency)) Hz")
+              .font(.system(size: 10, design: .monospaced))
+              .foregroundColor(sttEngine.dominantFrequency >= 1500 && sttEngine.dominantFrequency <= 5000 ? .green : .red)
+          }
+          .padding(.leading, 10)
+          .padding(.top, 10)
+
           Spacer()
           if pipeline.isRecording {
             if pipeline.isPaused {
