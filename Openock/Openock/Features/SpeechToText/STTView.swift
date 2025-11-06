@@ -35,7 +35,7 @@ struct STTView: View {
         .animation(.easeInOut(duration: 0.25), value: settings.selectedBackground)
 
       // Whistle detection icon overlay
-      if sttEngine.isWhistleDetected {
+      if pipeline.isWhistleDetected {
         VStack {
           HStack {
             Spacer()
@@ -49,25 +49,25 @@ struct STTView: View {
           Spacer()
         }
         .transition(.scale.combined(with: .opacity))
-        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: sttEngine.isWhistleDetected)
+        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: pipeline.isWhistleDetected)
       }
 
       VStack(spacing: 0) {
         // Whistle detection debug info (top)
         HStack {
-          VStack(alignment: .leading, spacing: 2) {
-            Text("🎯 S1: \(String(format: "%.2f", sttEngine.stage1Probability))")
+          HStack(spacing: 8) {
+            Text("🎯 S1: \(String(format: "%.2f", pipeline.stage1Probability))")
               .font(.system(size: 10, design: .monospaced))
-              .foregroundColor(sttEngine.stage1Probability >= 0.50 ? .green : .gray)
-            Text("🎯 S2: \(String(format: "%.2f", sttEngine.stage2Probability))")
+              .foregroundColor(pipeline.stage1Probability >= 0.50 ? .green : .gray)
+            Text("🎯 S2: \(String(format: "%.2f", pipeline.stage2Probability))")
               .font(.system(size: 10, design: .monospaced))
-              .foregroundColor(sttEngine.stage2Probability >= 0.20 ? .green : .gray)
-            Text("🔊 Energy: \(String(format: "%.4f", sttEngine.audioEnergy))")
+              .foregroundColor(pipeline.stage2Probability >= 0.20 ? .green : .gray)
+            Text("🔊 Energy: \(String(format: "%.4f", pipeline.audioEnergy))")
               .font(.system(size: 10, design: .monospaced))
               .foregroundColor(.gray)
-            Text("🎼 Freq: \(String(format: "%.0f", sttEngine.dominantFrequency)) Hz")
+            Text("🎼 Freq: \(String(format: "%.0f", pipeline.dominantFrequency)) Hz")
               .font(.system(size: 10, design: .monospaced))
-              .foregroundColor(sttEngine.dominantFrequency >= 1500 && sttEngine.dominantFrequency <= 5000 ? .green : .red)
+              .foregroundColor(pipeline.dominantFrequency >= 1500 && pipeline.dominantFrequency <= 5000 ? .green : .red)
           }
           .padding(.leading, 10)
           .padding(.top, 10)
