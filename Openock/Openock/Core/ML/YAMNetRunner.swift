@@ -2,8 +2,11 @@ import Foundation
 import AVFoundation
 import Combine
 
+enum YamCue { case cheer, boo }
+
 final class YAMNetRunner: ObservableObject {
     @Published var statusText: String = "YAMNet: idle"
+    @Published var cue: YamCue?   // 👈 STTView로 신호 전달
 
     private let yam = YAMNetLite()
     private let inferQ = DispatchQueue(label: "yamnet.infer.queue") // 직렬
@@ -32,13 +35,36 @@ final class YAMNetRunner: ObservableObject {
                 let window = Array(self.ring.prefix(self.target))
                 self.ring.removeFirst(self.target)
 
-                let res = self.yam.classify(waveform: window, topK: 3)
+                // topK를 충분히 크게 잡아 필요한 라벨 점수 확보
+                let res = self.yam.classify(waveform: window, topK: 521)
                 let line = res.topK
+                    .prefix(3)
                     .map { "\($0.label) \(String(format: "%.2f", $0.score))" }
                     .joined(separator: ", ")
 
+                // 점수 맵(라벨은 소문자 비교)
+                var score: [String: Float] = [:]
+                for (label, s) in res.topK {
+                    score[label.lowercased()] = s
+                }
+
+                // 임계치 판정
+                let cheerScore = max(score["cheering"] ?? 0, score["crowd"] ?? 0)
+                let booScore   = score["vehicle"] ?? 0
+                let cheerHit = cheerScore >= 0.13
+                let booHit   = booScore   >= 0.2
+
                 DispatchQueue.main.async {
                     self.statusText = line.isEmpty ? "YAMNet: (no result)" : "YAMNet: \(line)"
+
+                    // 둘 다 충족 시 큰 값 우선
+                    if cheerHit && booHit {
+                        self.cue = (cheerScore >= booScore) ? .cheer : .boo
+                    } else if cheerHit {
+                        self.cue = .cheer
+                    } else if booHit {
+                        self.cue = .boo
+                    }
                 }
             }
         }

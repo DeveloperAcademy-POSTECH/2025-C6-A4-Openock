@@ -16,6 +16,9 @@ final class AudioPipeline: ObservableObject {
     @Published var isRecording: Bool = false
     @Published var isPaused: Bool = false
 
+    // 👉 오버레이 트리거 전달용
+    @Published var yamCue: YamCue?
+
     // 내부 구성요소
     private let capture = AudioCaptureManager()
     private let io = AudioIOManager()
@@ -32,6 +35,11 @@ final class AudioPipeline: ObservableObject {
         yamRunner.$statusText
             .receive(on: DispatchQueue.main)
             .assign(to: &$yamStatus)
+
+        // ✅ 러너 cue → 파이프라인으로 중계
+        yamRunner.$cue
+            .receive(on: DispatchQueue.main)
+            .assign(to: &$yamCue)
 
         // ✅ STTEngine의 transcript 반영
         if #available(macOS 15.0, *) {
