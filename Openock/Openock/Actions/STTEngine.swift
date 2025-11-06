@@ -158,6 +158,26 @@ class STTEngine: NSObject, ObservableObject {
       self.errorMessage = nil
     }
   }
+
+  // === ✅ 추가: 파이프라인 연동용 경량 API =============================
+
+  /// 파이프라인이 IO를 담당할 때, 전사 파이프라인만 시작
+  @MainActor
+  func startTranscriptionOnly() async {
+    await transcriberManager.startTranscription()
+  }
+
+  /// 파이프라인이 IO를 담당할 때, 전사 파이프라인만 중지
+  func stopTranscriptionOnly() {
+    transcriberManager.stopTranscription()
+  }
+
+  /// 파이프라인에서 받은 PCM을 그대로 STT로 전달
+  func feed(buffer: AVAudioPCMBuffer) {
+    transcriberManager.processAudio(buffer: buffer)
+  }
+
+  // ===================================================================
   
   // MARK: - Private Methods
   

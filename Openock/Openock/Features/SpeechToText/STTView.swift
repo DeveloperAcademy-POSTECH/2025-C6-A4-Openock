@@ -1,14 +1,8 @@
-//
-//  STTView.swift
-//  Openock
-//
-//  Created by JiJooMaeng on 10/26/25.
-//
-
 import SwiftUI
+import AVFoundation
 
 struct STTView: View {
-  @EnvironmentObject var sttEngine: STTEngine
+  @EnvironmentObject var pipeline: AudioPipeline
   @EnvironmentObject var settings: SettingsManager
   @State private var isExpanded = false
 
@@ -18,15 +12,7 @@ struct STTView: View {
     guard let window = NSApp.keyWindow else { return }
 
     let currentFrame = window.frame
-    let newHeight: CGFloat
-
-    if isExpanded {
-      // Collapse to half
-      newHeight = currentFrame.height / 2
-    } else {
-      // Expand to double
-      newHeight = currentFrame.height * 2
-    }
+    let newHeight: CGFloat = isExpanded ? (currentFrame.height / 2) : (currentFrame.height * 2)
 
     // Keep the bottom position fixed, expand upward
     let newFrame = NSRect(
@@ -39,7 +25,7 @@ struct STTView: View {
     window.setFrame(newFrame, display: true, animate: true)
     isExpanded.toggle()
   }
-  
+
   var body: some View {
     ZStack {
       settings.backgroundColor
@@ -47,20 +33,21 @@ struct STTView: View {
         .glassEffect(.clear, in: .rect)
         .ignoresSafeArea()
         .animation(.easeInOut(duration: 0.25), value: settings.selectedBackground)
-      
+
       VStack(spacing: 0) {
+        // 상단 컨트롤 (녹음/일시정지)
         HStack {
           Spacer()
-          if sttEngine.isRecording {
-            if sttEngine.isPaused {
-              Button(action: { sttEngine.resumeRecording() }) {
+          if pipeline.isRecording {
+            if pipeline.isPaused {
+              Button(action: { pipeline.resumeRecording() }) {
                 Image(systemName: "play.circle.fill")
                   .font(.system(size: 28))
               }
               .buttonStyle(.borderless)
               .tint(.green)
             } else {
-              Button(action: { sttEngine.pauseRecording() }) {
+              Button(action: { pipeline.pauseRecording() }) {
                 Image(systemName: "pause.circle.fill")
                   .font(.system(size: 28))
               }
@@ -71,9 +58,16 @@ struct STTView: View {
         }
         .padding(.trailing, 10)
         .padding(.top, 10)
-        
-        // Transcript display - starts from bottom
-        if sttEngine.transcript.isEmpty {
+
+        // ✅ YAMNet 상태 한 줄 (HEAD에 추가 반영)
+        Text(pipeline.yamStatus)
+          .font(.caption)
+          .foregroundColor(.secondary)
+          .padding(.horizontal, 16)
+          .frame(maxWidth: .infinity, alignment: .leading)
+
+        // Transcript display - starts from bottom (HEAD 레이아웃 유지)
+        if pipeline.transcript.isEmpty {
           Spacer()
           VStack(alignment: .center, spacing: 10) {
             Image(systemName: "text.bubble")
@@ -89,7 +83,7 @@ struct STTView: View {
           GeometryReader { geometry in
             VStack(alignment: .leading, spacing: 0) {
               Spacer(minLength: 0)
-              Text(sttEngine.transcript)
+              Text(pipeline.transcript)
                 .font(Font.custom(settings.selectedFont, size: settings.fontSize))
                 .foregroundStyle(settings.textColor)
                 .lineSpacing(lineSpacing)
@@ -109,19 +103,14 @@ struct STTView: View {
       toggleWindowHeight()
     }
     .onAppear {
-      sttEngine.setupSystemCapture { success in
-        if success {
-          sttEngine.startRecording()
-        } else {
-          print("Error")
-        }
-      }
+      // ✅ 파이프라인 시작 (캡처 → YAM → STT)
+      pipeline.startRecording()
     }
   }
 }
 
 #Preview {
   STTView()
-    .environmentObject(STTEngine())
+    .environmentObject(AudioPipeline())
     .environmentObject(SettingsManager())
 }
