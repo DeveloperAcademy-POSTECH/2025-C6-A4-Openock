@@ -53,6 +53,9 @@ class STTTranscriberManager: ObservableObject {
   func startTranscription() async {
     print("🔄 [STTTranscriberManager] Starting dual-language transcription...")
 
+    // ✅ Set isTranscribing early to accept incoming audio buffers
+    isTranscribing = true
+
     // Create Korean SpeechTranscriber
     koTranscriber = SpeechTranscriber(
         locale: Locale(identifier: "ko-KR"),
@@ -138,7 +141,6 @@ class STTTranscriberManager: ObservableObject {
     }
 
     // Process transcription results from both transcribers in background
-    isTranscribing = true
     Task {
       await processDualTranscriptionResults(koTranscriber: koTranscriber, enTranscriber: enTranscriber)
     }

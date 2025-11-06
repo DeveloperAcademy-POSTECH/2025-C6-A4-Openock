@@ -268,10 +268,20 @@ class AudioIOManager {
     self.bufferCallback = bufferCallback
     self.levelCallback = levelCallback
     self.bufferCallCount = 0
-    
-    // Get device format
-    guard let format = getDeviceFormat(deviceID: deviceID) else {
-      print("❌ [AudioIOManager] Failed to get device format")
+
+    // Get device format with retry logic
+    var format: AVAudioFormat?
+    for attempt in 1...3 {
+      format = getDeviceFormat(deviceID: deviceID)
+      if format != nil {
+        break
+      }
+      print("⚠️ [AudioIOManager] Failed to get device format (attempt \(attempt)/3), retrying...")
+      Thread.sleep(forTimeInterval: 0.1)
+    }
+
+    guard let format = format else {
+      print("❌ [AudioIOManager] Failed to get device format after 3 attempts")
       return false
     }
     
