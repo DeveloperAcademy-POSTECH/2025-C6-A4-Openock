@@ -8,48 +8,38 @@
 import SwiftUI
 
 struct MenuBarView: View {
+  @EnvironmentObject var settings: SettingsManager
+  
   enum Tab: String, CaseIterable {
     case appearance = "배경 및 글씨"
-//    case shortcut = "단축키"
+    case featureToggle = "기능 온오프"
   }
 
   @State private var tab: Tab = .appearance
+  @State private var showFontPicker: Bool = false
 
   var body: some View {
     VStack(spacing: 0) {
       Header()
-        .padding(.horizontal, 8)
-      // 상단 탭
+      // MARK: - 상단 탭
       Tabs(tab: $tab)
-        .padding(.horizontal, 10)
-      
       Divider()
-        .padding(.top, 6)
-        .padding(.bottom, 20)
+        .padding(.bottom, 3.5)
 
-      // 탭 컨텐츠
-      HStack(spacing: 0) {
-        Spacer().frame(width: 16) // left gutter (always visible)
-        VStack(alignment: .leading, spacing: 0) {
-          switch tab {
-          case .appearance:
-            AppearanceView(onSelect: {})
-//          case .shortcut:
-//            ShortcutView()
-          }
+      // MARK: - 탭 컨텐츠
+      VStack(alignment: .leading, spacing: 0) {
+        switch tab {
+        case .appearance:
+          AppearanceView()
+          .environmentObject(settings)
+        case .featureToggle:
+          FeatureToggleView(onSelect: {})
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        Spacer().frame(width: 16) // right gutter (always visible)
       }
-      .frame(maxHeight: .infinity, alignment: .top)
+      .safeAreaPadding(16)
       
     }
-    
-    .background(Color.white)
-    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-    .shadow(color: .black.opacity(0.2), radius: 20, x: 0, y: 8)
-    .environment(\.controlSize, .small)
-    .frame(width: 346, height: 443)
+    .frame(width: 346)
   }
 }
 
@@ -59,19 +49,17 @@ private struct Header: View {
     ZStack {
       Text("설정")
         .font(.system(size: 11, weight: .semibold))
-        .padding(.vertical, 4)
 
-//      HStack {
-//        Spacer()
-//        Image(systemName: "house")
-//          .font(.system(size: 13))
-//      }
+      HStack {
+        Spacer()
+        Image(systemName: "info.circle")
+          .font(.system(size: 13.42))
+      }
     }
-    .frame(height: 28)
+    .padding(.vertical, 5.37)
+    .safeAreaPadding(.horizontal, 8.05)
   }
 }
-
-
 
 // MARK: - Tabs
 private struct Tabs: View {
@@ -93,10 +81,12 @@ private struct Tabs: View {
       }
       Spacer()
     }
-    
+    .safeAreaPadding(.horizontal, 10.74)
+    .padding(.vertical, 4)
   }
 }
 
 #Preview {
   MenuBarView()
+    .environmentObject(SettingsManager())
 }

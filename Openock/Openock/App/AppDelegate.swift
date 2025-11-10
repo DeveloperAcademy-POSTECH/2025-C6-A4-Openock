@@ -5,7 +5,6 @@
 //  Created by JiJooMaeng on 10/26/25.
 //
 
-
 import AppKit
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
