@@ -1,13 +1,12 @@
+//
+//  STTView.swift
+//  Openock
+//
+//  Created by JiJooMaeng on 10/26/25.
+//
+
 import SwiftUI
 import AVFoundation
-
-// 창 높이 조절 방지를 위한 Delegate
-private final class WindowResizeDelegate: NSObject, NSWindowDelegate {
-  func windowWillResize(_ sender: NSWindow, to frameSize: NSSize) -> NSSize {
-    // 높이는 현재 높이로 고정, 가로만 조절 가능
-    return NSSize(width: frameSize.width, height: sender.frame.height)
-  }
-}
 
 struct STTView: View {
   @EnvironmentObject var pipeline: AudioPipeline
@@ -25,7 +24,9 @@ struct STTView: View {
   private let lineSpacing: CGFloat = 4
   private let controlHeight: CGFloat = 50
 
-  // 텍스트 2줄에 필요한 높이 계산 (폰트 크기에 따라 동적)
+  // MARK: - 높이 계산 함수
+
+  /// 텍스트 2줄에 필요한 높이 계산 (폰트 크기에 따라 동적)
   private func baseTextAreaHeight() -> CGFloat {
     let fontName = settings.selectedFont
     let fontSize = CGFloat(settings.fontSize)
@@ -40,7 +41,7 @@ struct STTView: View {
     return max(textHeight, 50) // 최소 높이 보장
   }
 
-  // 전체 창 높이 계산 (콘텐츠 기준; 타이틀바는 항상 노출)
+  /// 전체 창 높이 계산 (콘텐츠 기준; 타이틀바는 항상 노출)
   private func totalWindowHeight() -> CGFloat {
     // 규칙에 따른 가시성 계산
     let controlsVisible = pipeline.isPaused || isHovering
@@ -62,7 +63,9 @@ struct STTView: View {
     return height
   }
 
-  // 창 높이 업데이트
+  // MARK: - 창 높이 업데이트
+
+  /// 창 높이 업데이트
   private func updateWindowHeight() {
     guard let w = window else {
       print("❌ updateWindowHeight: window is nil")
@@ -105,6 +108,7 @@ struct STTView: View {
     w.contentMaxSize = NSSize(width: 10000, height: desiredContentHeight)
   }
 
+  /// 창 높이 업데이트 (throttle 적용)
   private func throttledUpdateWindowHeight(minInterval: TimeInterval = 0.05) {
     let now = Date()
     if now.timeIntervalSince(lastHeightUpdate) >= minInterval {
@@ -118,7 +122,9 @@ struct STTView: View {
     }
   }
 
-  // 일시정지시 5초 후 텍스트 영역 숨김
+  // MARK: - 타이머
+
+  /// 일시정지시 5초 후 텍스트 영역 숨김
   private func startTextHideTimer() {
     print("⏱️ startTextHideTimer called")
     textHideTimer?.invalidate()
@@ -136,91 +142,37 @@ struct STTView: View {
     }
   }
 
+  // MARK: - Body
+
   var body: some View {
     let controlsVisible = pipeline.isPaused || isHovering
     let textVisible = pipeline.isPaused ? showTextArea : true
 
     ZStack(alignment: .top) {
-      // 배경색을 가장 먼저 배치 (80% 투명도)
+      // 배경색을 가장 먼저 배치
       settings.backgroundColor
         .opacity(0.8)
         .glassEffect(.clear, in: .rect)
         .ignoresSafeArea(.all)
 
       VStack(spacing: 0) {
-          // 컨트롤 영역 (상단)
-          if controlsVisible {
-            HStack(alignment: .center, spacing: 0) {
-              HStack {
-                if pipeline.isPaused {
-                  Text("일시정지")
-                    .foregroundStyle(settings.textColor)
-                    .font(.system(size: 14, weight: .medium))
-                }
-              }
-              .padding(.horizontal, 16)
-              .frame(maxWidth: .infinity, alignment: .leading)
+        // 컨트롤 영역 (상단)
+        if controlsVisible {
+          STTControlsView(controlHeight: controlHeight)
+            .environmentObject(pipeline)
+            .environmentObject(settings)
+        }
 
-              HStack(alignment: .center, spacing: 8) {
-                Button(action: {
-                  if pipeline.isRecording {
-                    pipeline.isPaused ? pipeline.resumeRecording() : pipeline.pauseRecording()
-                  }
-                }) {
-                  Image(systemName: pipeline.isPaused ? "play.fill" : "pause.fill")
-                    .font(.system(size: 24))
-                    .foregroundColor(settings.textColor)
-                    .frame(width: 36, height: 36)
-                }
-                .buttonStyle(.plain)
-                .disabled(!pipeline.isRecording)
-              }
-              .padding(.trailing, 16)
-            }
-            .frame(height: controlHeight)
-            .frame(maxWidth: .infinity)
-            .allowsHitTesting(true)
-            .zIndex(10)
-          }
-
-          // 텍스트 영역 (하단)
-          if textVisible {
-            Group {
-              if pipeline.transcript.isEmpty {
-                VStack(alignment: .center, spacing: 10) {
-                  Image(systemName: "text.bubble")
-                    .font(.system(size: 40))
-                    .foregroundColor(.gray.opacity(0.5))
-                  Text("음성이 인식되면 여기에 표시됩니다...")
-                    .foregroundColor(.gray)
-                    .italic()
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-              } else {
-                GeometryReader { geo in
-                  VStack(alignment: .center, spacing: 0) {
-                    Spacer(minLength: 0)
-                    Text(pipeline.transcript)
-                      .font(Font.custom(settings.selectedFont, size: settings.fontSize))
-                      .foregroundStyle(settings.textColor)
-                      .lineSpacing(lineSpacing)
-                      .multilineTextAlignment(.center)
-                      .frame(maxWidth: .infinity)
-                      .fixedSize(horizontal: false, vertical: true)
-                  }
-                  .frame(width: geo.size.width, height: geo.size.height, alignment: .bottom)
-                  .clipped()
-                }
-              }
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .frame(height: baseTextAreaHeight())
-            .contentShape(Rectangle())
-            .onTapGesture {
-              updateWindowHeight()
-            }
-          }
+        // 텍스트 영역 (하단)
+        if textVisible {
+          STTTextAreaView(
+            lineSpacing: lineSpacing,
+            height: baseTextAreaHeight(),
+            onTap: updateWindowHeight
+          )
+          .environmentObject(pipeline)
+          .environmentObject(settings)
+        }
       }
       .frame(maxWidth: .infinity)
       .frame(maxHeight: .infinity, alignment: .top)
@@ -322,21 +274,6 @@ struct STTView: View {
         }
       }
     )
-  }
-}
-
-struct WindowAccessor: NSViewRepresentable {
-  var onResolve: (NSWindow?) -> Void
-
-  func makeNSView(context: Context) -> NSView {
-    let view = NSView()
-    DispatchQueue.main.async {
-      onResolve(view.window)
-    }
-    return view
-  }
-
-  func updateNSView(_ nsView: NSView, context: Context) {
   }
 }
 
