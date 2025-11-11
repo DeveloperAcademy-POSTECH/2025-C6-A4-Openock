@@ -80,38 +80,61 @@ struct AppearanceView: View {
         .font(.system(size: 11))
         .fontWeight(.semibold)
       
-      VStack(alignment: .leading, spacing: 12) {
-        HStack(alignment: .firstTextBaseline) {
-          Text("작게")
-            .font(.system(size: 11))
-            .foregroundStyle(.secondary)
-          Spacer()
-          Text("\(Int(settings.fontSize))pt")
-            .font(.system(size: 12, weight: .semibold))
-          Spacer()
-          Text("크게")
-            .font(.system(size: 20))
-            .foregroundStyle(.secondary)
-        }
-        Slider(value: $settings.fontSize, in: sizeRange, step: 16)
-          .onChange(of: settings.fontSize) {
-            settings.save()
+      ZStack {
+        VStack(alignment: .leading, spacing: 8) {
+          HStack(alignment: .bottom) {
+            Text("작게")
+              .font(.system(size: 11))
+              .foregroundStyle(.secondary)
+            Spacer()
+            Text("크게")
+              .font(.system(size: 20))
+              .foregroundStyle(.secondary)
           }
+          
+          Slider(value: $settings.fontSize, in: sizeRange, step: 16)
+            .onChange(of: settings.fontSize) {
+              settings.save()
+            }
+          
+        }
+        .padding(16)
+        .background(Color(NSColor.quaternaryLabelColor).opacity(0.1))
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .overlay(
+          RoundedRectangle(cornerRadius: 8)
+            .stroke(Color(NSColor.separatorColor), lineWidth: 0.5)
+        )
+        
+        GeometryReader { geo in
+          ZStack(alignment: .leading) {
+            Text("\(Int(settings.fontSize))pt")
+              .font(.system(size: 10, weight: .semibold))
+              .foregroundColor(.primary)
+              .padding(.horizontal, 6)
+              .padding(.vertical, 3)
+              .background(
+                RoundedRectangle(cornerRadius: 8)
+                  .fill(Color.gray)
+              )
+              .offset(x: thumbXPosition(in: geo.size.width - 35) + 10, y: 25)
+              .animation(.easeInOut(duration: 0.15), value: settings.fontSize)
+          }
+        }
       }
-      .padding(16)
-      .background(Color(NSColor.quaternaryLabelColor).opacity(0.1))
-      .clipShape(RoundedRectangle(cornerRadius: 8))
-      .overlay(
-        RoundedRectangle(cornerRadius: 8)
-          .stroke(Color(NSColor.separatorColor), lineWidth: 0.5)
-      )
     }
+  }
+  
+  private func thumbXPosition(in width: CGFloat) -> CGFloat {
+    let progress = (settings.fontSize - sizeRange.lowerBound) / (sizeRange.upperBound - sizeRange.lowerBound)
+    let thumbWidth: CGFloat = 20
+    return CGFloat(progress) * (width - thumbWidth)
   }
   
   // MARK: - 자막 배경 선택
   var backgroundSelectView: some View {
     VStack(alignment: .leading, spacing: 6) {
-      Text("자막배경")
+      Text("자막 스타일")
         .font(.system(size: 11))
         .fontWeight(.semibold)
       
