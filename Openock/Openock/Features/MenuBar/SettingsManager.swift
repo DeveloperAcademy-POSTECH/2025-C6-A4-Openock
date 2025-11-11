@@ -26,7 +26,7 @@ final class SettingsManager: ObservableObject {
     default: return .clear
     }
   }
-  
+
   var textColor: Color {
     switch selectedBackground {
     case "블랙": return .white
