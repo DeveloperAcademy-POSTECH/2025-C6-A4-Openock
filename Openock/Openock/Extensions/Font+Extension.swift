@@ -10,6 +10,7 @@ import SwiftUI
 extension Font {
   enum SFPro: String {
     case regular = "SF Pro Text Regular"
+    case medium = "SF Pro Text Medium"
     case semibold = "SF Pro Text Semibold"
     
     /// 폰트 불러오기
@@ -18,6 +19,7 @@ extension Font {
     }
   }
   
+  // MARK: - 설정창 UI
   // 배경 및 글씨
   static var bsTabBarOn: Font {
     SFPro.semibold.font(size: 13)
@@ -51,6 +53,17 @@ extension Font {
   // 실시간 자막 효과
   static var bsToggleCaption: Font {
     SFPro.regular.font(size: 13)
+  }
+  
+  // MARK: - 자막창 UI
+  // 음성을 감지하면 자막이 표시됩니다
+  static var bsCaption1: Font {
+    SFPro.medium.font(size: 24)
+  }
+  
+  // 일시정지
+  static var bsCaption2: Font {
+    SFPro.regular.font(size: 24)
   }
 }
 
