@@ -29,16 +29,13 @@ struct AppearanceView: View {
   
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
-      // 서체
       fontSelectView
-      // 크기
       sizeSelectView
-      // 자막배경
       backgroundSelectView
     }
   }
   
-  // MARK: - 서체 선택
+  // MARK: - 서체 선택 View
   var fontSelectView: some View {
     VStack(alignment: .leading, spacing: 6) {
       Text("서체")
@@ -74,7 +71,7 @@ struct AppearanceView: View {
     }
   }
   
-  // MARK: - 크기 선택
+  // MARK: - 크기 선택 View
   var sizeSelectView: some View {
     VStack(alignment: .leading, spacing: 6) {
       Text("크기")
@@ -126,7 +123,7 @@ struct AppearanceView: View {
     }
   }
   
-  // MARK: - 자막 배경 선택
+  // MARK: - 자막 배경 선택 View
   var backgroundSelectView: some View {
     VStack(alignment: .leading, spacing: 6) {
       Text("자막 스타일")
@@ -245,6 +242,7 @@ struct AppearanceView: View {
     fontPickerPanel = nil
   }
   
+  // MARK: - slider handle position
   private func thumbXPosition(in width: CGFloat) -> CGFloat {
     let progress = (settings.fontSize - sizeRange.lowerBound) / (sizeRange.upperBound - sizeRange.lowerBound)
     let thumbWidth: CGFloat = 20
