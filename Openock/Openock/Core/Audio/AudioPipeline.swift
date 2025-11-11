@@ -39,19 +39,13 @@ final class AudioPipeline: ObservableObject {
     @available(macOS 15.0, *)
     private let whistleDetector = WhistleDetector()
 
-    // ✅ 팀 공용 STT 엔진 사용 (분석 파이프라인만 사용)
+    // 팀 공용 STT 엔진 사용 (분석 파이프라인만 사용)
     @available(macOS 15.0, *)
     private let sttEngine = STTEngine()
 
     // 호루라기 인디케이터 창 매니저
     private var whistleManager: WhistleIndicatorWindowManager?
-
-    private var bag = Set<AnyCancellable>()
     private var bufferCallCount = 0
-  
-    // 팀 공용 STT 엔진 사용 (분석 파이프라인만 사용)
-    @available(macOS 15.0, *)
-    private let sttEngine = STTEngine()
 
     // 라우드니스/스타일 엔진
     private let loudness = LoudnessMeter()

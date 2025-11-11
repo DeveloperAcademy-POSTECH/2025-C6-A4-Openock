@@ -123,7 +123,7 @@ private struct WhistleIndicatorContent: View {
 
     var body: some View {
         ZStack {
-//            if pipeline.isWhistleDetected {
+            if pipeline.isWhistleDetected {
                 HStack(spacing: 8) {
                     // Whistle icon from asset
                     Image("whistle")
@@ -150,7 +150,7 @@ private struct WhistleIndicatorContent: View {
                 .clipShape(Capsule())
                 .transition(.scale.combined(with: .opacity))
                 .animation(.spring(response: 0.28, dampingFraction: 0.8), value: pipeline.isWhistleDetected)
-//            }
+            }
         }
         // A minimum size similar to the reference badge (kept flexible)
         .frame(width: 106, height: 48)
