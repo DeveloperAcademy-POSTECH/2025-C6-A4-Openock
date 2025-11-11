@@ -26,11 +26,38 @@ struct AppearanceView: View {
     case contrast = "고대비"
   }
   
+  enum HighlightColor: String, CaseIterable {
+    case none
+    case red
+    case orange
+    case yellow
+    case green
+    case mint
+    case sky
+    case blue
+    case purple
+    
+    var color: Color {
+      switch self {
+      case .none: return .gray.opacity(0.3)
+      case .red: return .red
+      case .orange: return .orange
+      case .yellow: return .yellow
+      case .green: return .green
+      case .mint: return .mint
+      case .sky: return .cyan
+      case .blue: return .blue
+      case .purple: return .purple
+      }
+    }
+  }
+  
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
       fontSelectView
       sizeSelectView
       backgroundSelectView
+      highlightSelectView
     }
   }
   
@@ -186,6 +213,52 @@ struct AppearanceView: View {
       )
     }
   }
+  
+  // MARK: - 자막 강조 색상 선택 View
+  var highlightSelectView: some View {
+    VStack(alignment: .leading, spacing: 6) {
+      Text("자막 스타일")
+        .font(.system(size: 11))
+        .fontWeight(.semibold)
+      
+      HStack {
+        ForEach(HighlightColor.allCases, id: \.self) { option in
+          Button {
+            settings.selectedHighlight = option.rawValue
+            settings.save()
+          } label: {
+            if option == .none {
+              Image(systemName: "xmark.circle")
+                .resizable()
+                .frame(width: 25, height: 25)
+                .foregroundStyle(Color.white)
+            } else {
+              Circle()
+                .fill(option.color)
+                .overlay(
+                  Circle()
+                    .stroke(settings.selectedHighlight == option.rawValue ? Color.purple : Color.clear, lineWidth: 2)
+                  )
+            }
+          }
+          .frame(width: 25, height: 25)
+          .buttonStyle(.plain)
+          
+          if option != .purple {
+            Spacer()
+          }
+        }
+      }
+      .padding(8)
+      .background(Color(NSColor.quaternaryLabelColor).opacity(0.1))
+      .clipShape(RoundedRectangle(cornerRadius: 8))
+      .overlay(
+        RoundedRectangle(cornerRadius: 8)
+          .stroke(Color(NSColor.separatorColor), lineWidth: 0.5)
+      )
+    }
+  }
+  
   
   // MARK: - Font Panel
   private func openFontPickerPanel() {
