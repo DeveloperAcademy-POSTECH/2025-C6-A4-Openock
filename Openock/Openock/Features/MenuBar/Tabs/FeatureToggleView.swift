@@ -1,4 +1,3 @@
-//
 //  FeatureToggleView.swift
 //  Openock
 //
@@ -8,31 +7,36 @@
 import SwiftUI
 
 struct FeatureToggleView: View {
+  // ✅ SettingsManager를 Environment에서 받아서 실제 앱 설정과 연결
+  @EnvironmentObject var settings: SettingsManager
   var onSelect: () -> Void = {}
-  
-  @State private var isSubtitleEffectOn = true
-  @State private var isScreenReactionOn = true
-  @State private var isWhistleAlertOn = true
-  
+
   var body: some View {
     VStack(alignment: .leading, spacing: 12) {
       Text("추가 기능")
         .font(.system(size: 14, weight: .semibold))
         .foregroundColor(.secondary)
         .padding(.horizontal, 16)
-      
+
       VStack(spacing: 0) {
-        featureRow(title: "자막 크기 효과", isOn: $isSubtitleEffectOn)
-        
-        Divider()
-          .padding(.leading, 16)
-        
-        featureRow(title: "자막 외 소리에 따른 화면 반응", isOn: $isScreenReactionOn)
-        
-        Divider()
-          .padding(.leading, 16)
-        
-        featureRow(title: "호루라기 소리 알림", isOn: $isWhistleAlertOn)
+        featureRow(
+          title: "자막 크기 효과",
+          isOn: $settings.toggleSizeFX   // ✅ 로컬 @State → settings 바인딩으로 교체
+        )
+
+        Divider().padding(.leading, 16)
+
+        featureRow(
+          title: "자막 외 소리에 따른 화면 반응",
+          isOn: $settings.toggleYamReactions
+        )
+
+        Divider().padding(.leading, 16)
+
+        featureRow(
+          title: "호루라기 소리 알림",
+          isOn: $settings.toggleWhistle
+        )
       }
       .background(
         RoundedRectangle(cornerRadius: 12)
@@ -44,7 +48,7 @@ struct FeatureToggleView: View {
       )
     }
   }
-  
+
   @ViewBuilder
   private func featureRow(title: String, isOn: Binding<Bool>) -> some View {
     HStack {
@@ -54,7 +58,7 @@ struct FeatureToggleView: View {
       Spacer()
       Toggle("", isOn: isOn)
         .toggleStyle(.switch)
-      .labelsHidden()
+        .labelsHidden()
     }
     .padding(.horizontal, 16)
   }

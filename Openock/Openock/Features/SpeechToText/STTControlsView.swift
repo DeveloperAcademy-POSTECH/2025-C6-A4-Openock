@@ -15,6 +15,9 @@ struct STTControlsView: View {
   let controlHeight: CGFloat
 
   var body: some View {
+    // ✅ SwiftUI가 Binding이 아닌 실제 객체로 인식하도록 명시
+    let pipeline = pipeline
+
     HStack(alignment: .center, spacing: 0) {
       HStack {
         if pipeline.isPaused {

@@ -4,6 +4,7 @@
 //
 //  Created by JiJooMaeng on 10/26/25.
 //
+//
 
 import SwiftUI
 
@@ -12,7 +13,10 @@ struct OpenockApp: App {
   @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
   @StateObject private var pipeline = AudioPipeline()
   @StateObject private var settings  = SettingsManager()
-  
+
+  // ↓ SwiftUI에서 변경 가능한 상태로 보관 (body 안에서도 대입 가능)
+  @State private var onoffManager: OnOffManager? = nil
+
   var body: some Scene {
     WindowGroup {
       STTView()
@@ -20,11 +24,16 @@ struct OpenockApp: App {
         .environmentObject(pipeline)
         .environmentObject(settings)
         .environmentObject(appDelegate)
+        .task {
+          // 한 번만 생성
+          if onoffManager == nil {
+            onoffManager = OnOffManager(pipeline: pipeline, settings: settings)
+          }
+        }
     }
     .windowStyle(.hiddenTitleBar)
     .windowToolbarStyle(.unifiedCompact)
-//    .defaultSize(width: 800)
-    
+
     MenuBarExtra("Openock", systemImage: "character.bubble") {
       MenuBarView()
         .environmentObject(settings)
