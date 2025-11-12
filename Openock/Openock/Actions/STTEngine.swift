@@ -22,19 +22,26 @@ import Combine
 class STTEngine: NSObject, ObservableObject {
   
   // MARK: - Published Properties (UI State)
-  
+
   @Published var transcript = ""
   @Published var isRecording = false
   @Published var isPaused = false
   @Published var errorMessage: String?
   @Published var audioLevel: Float = 0.0
   @Published var isReceivingAudio = false
-  
+  @Published var isWhistleDetected = false  // 휘슬 감지 상태
+  @Published var whistleProbability: Float = 0.0  // 휘슬 확률 (디버깅용)
+  @Published var audioEnergy: Float = 0.0  // 오디오 에너지 (디버깅용)
+  @Published var dominantFrequency: Float = 0.0  // 주요 주파수 (디버깅용)
+  @Published var stage1Probability: Float = 0.0  // 1단계 확률 (디버깅용)
+  @Published var stage2Probability: Float = 0.0  // 2단계 확률 (디버깅용)
+
   // MARK: - Manager Components
-  
+
   private let captureManager = AudioCaptureManager()
   private let ioManager = AudioIOManager()
   private let transcriberManager = STTTranscriberManager()
+  private let whistleDetector = WhistleDetector()  // 휘슬 감지기
   
   private var deviceID: AudioObjectID = kAudioObjectUnknown
   private var cancellables = Set<AnyCancellable>()
@@ -185,9 +192,40 @@ class STTEngine: NSObject, ObservableObject {
   private func handleAudioBuffer(_ buffer: AVAudioPCMBuffer) {
     // Send buffer to transcriber
     transcriberManager.processAudio(buffer: buffer)
-    
-    // Update receiving audio status (occasionally)
+
+    // Update receiving audio status and check whistle (occasionally)
     bufferCallCount += 1
+
+    // Whistle detection (10번에 한 번씩 체크 - 매우 빠른 반응)
+    if bufferCallCount % 10 == 0 {
+      // 백그라운드 스레드에서 실행하여 메인 오디오 처리에 영향 없도록
+      DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+        guard let self = self else { return }
+        let whistleDetected = self.whistleDetector.detectWhistle(from: buffer)
+
+        // UI에 디버깅 정보 업데이트
+        DispatchQueue.main.async {
+          self.whistleProbability = self.whistleDetector.lastWhistleProbability
+          self.audioEnergy = self.whistleDetector.lastRMSEnergy
+          self.dominantFrequency = self.whistleDetector.lastDominantFrequency
+          self.stage1Probability = self.whistleDetector.lastStage1Probability
+          self.stage2Probability = self.whistleDetector.lastStage2Probability
+        }
+
+        if whistleDetected {
+          DispatchQueue.main.async {
+            self.isWhistleDetected = true
+            print("🎵 [STTEngine] Whistle detected!")
+          }
+
+          // 3초 후 자동으로 아이콘 사라지게
+          DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+            self.isWhistleDetected = false
+          }
+        }
+      }
+    }
+
     if bufferCallCount % 30 == 1 {
       DispatchQueue.main.async {
         self.isReceivingAudio = true

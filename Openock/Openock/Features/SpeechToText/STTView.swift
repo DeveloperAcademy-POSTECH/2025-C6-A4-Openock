@@ -1,111 +1,199 @@
+//
+//  STTView.swift
+//  Openock
+//
+//  Created by JiJooMaeng on 10/26/25.
+//
 import SwiftUI
 import AVFoundation
+import AppKit   // ✅ NSWindow 등 AppKit 타입 사용
 
 struct STTView: View {
   @EnvironmentObject var pipeline: AudioPipeline
   @EnvironmentObject var settings: SettingsManager
-  @State private var isExpanded = false
+  @EnvironmentObject var appDelegate: AppDelegate
+
+  @State private var window: NSWindow?
+  @State private var showTextArea = true
+  @State private var textHideTimer: Timer?
+  @State private var isHovering = false
+  @State private var lastHeightUpdate = Date.distantPast
+  @State private var resizeDelegate = WindowResizeDelegate()
+  @State private var titlebarColorView: NSView?
+  @State private var hoverStateTimer: Timer?
 
   private let lineSpacing: CGFloat = 4
+  private let controlHeight: CGFloat = 50
 
-  private func toggleWindowHeight() {
-    guard let window = NSApp.keyWindow else { return }
-
-    let currentFrame = window.frame
-    let newHeight: CGFloat = isExpanded ? (currentFrame.height / 2) : (currentFrame.height * 2)
-
-    // Keep the bottom position fixed, expand upward
-    let newFrame = NSRect(
-      x: currentFrame.origin.x,
-      y: currentFrame.origin.y,
-      width: currentFrame.width,
-      height: newHeight
-    )
-
-    window.setFrame(newFrame, display: true, animate: true)
-    isExpanded.toggle()
+  // MARK: - Height helpers
+  private func baseTextAreaHeight() -> CGFloat {
+    let fontName = settings.selectedFont
+    let fontSize = CGFloat(settings.fontSize)
+    let font = NSFont(name: fontName, size: fontSize + 24) ?? NSFont.systemFont(ofSize: fontSize + 24)
+    let lineHeight = ceil(font.ascender - font.descender + font.leading)
+    let textHeight = (lineHeight * 2) + lineSpacing + 24
+    return max(textHeight, 50)
   }
 
+  private func totalWindowHeight() -> CGFloat {
+    let controlsVisible = pipeline.isPaused || isHovering
+    let textVisible = pipeline.isPaused ? showTextArea : true
+    var height: CGFloat = 0
+    if controlsVisible { height += controlHeight }
+    if textVisible { height += baseTextAreaHeight() }
+    if !controlsVisible && !textVisible { height = 1 }
+    return height
+  }
+
+  private func updateWindowHeight() {
+    guard let w = window else { return }
+    let desiredContentHeight = max(totalWindowHeight(), 1)
+    let currentFrame = w.frame
+    let currentContentRect = w.contentRect(forFrameRect: currentFrame)
+    let targetContentSize = NSSize(width: currentContentRect.width, height: desiredContentHeight)
+
+    w.contentMinSize = NSSize(width: 200, height: 1)
+    w.contentMaxSize = NSSize(width: 10000, height: 10000)
+    w.setContentSize(targetContentSize)
+    w.contentMinSize = NSSize(width: 200, height: desiredContentHeight)
+    w.contentMaxSize = NSSize(width: 10000, height: desiredContentHeight)
+  }
+
+  private func throttledUpdateWindowHeight(minInterval: TimeInterval = 0.05) {
+    let now = Date()
+    if now.timeIntervalSince(lastHeightUpdate) >= minInterval {
+      lastHeightUpdate = now
+      updateWindowHeight()
+    } else {
+      DispatchQueue.main.asyncAfter(deadline: .now() + minInterval) {
+        updateWindowHeight()
+        lastHeightUpdate = Date()
+      }
+    }
+  }
+
+  private func startTextHideTimer() {
+    textHideTimer?.invalidate()
+    textHideTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: false) { _ in
+      self.showTextArea = false
+      self.updateWindowHeight()
+    }
+  }
+
+  // MARK: - Body
   var body: some View {
-    ZStack {
+    let controlsVisible = pipeline.isPaused || isHovering
+    let textVisible = pipeline.isPaused ? showTextArea : true
+
+    ZStack(alignment: .top) {
       settings.backgroundColor
-        .id(settings.selectedBackground)
+        .opacity(0.8)
         .glassEffect(.clear, in: .rect)
-        .ignoresSafeArea()
-        .animation(.easeInOut(duration: 0.25), value: settings.selectedBackground)
+        .ignoresSafeArea(.all)
 
       VStack(spacing: 0) {
-        // 상단 컨트롤 (녹음/일시정지)
-        HStack {
-          Spacer()
-          if pipeline.isRecording {
-            if pipeline.isPaused {
-              Button(action: { pipeline.resumeRecording() }) {
-                Image(systemName: "play.circle.fill")
-                  .font(.system(size: 28))
-              }
-              .buttonStyle(.borderless)
-              .tint(.green)
-            } else {
-              Button(action: { pipeline.pauseRecording() }) {
-                Image(systemName: "pause.circle.fill")
-                  .font(.system(size: 28))
-              }
-              .buttonStyle(.borderless)
-              .tint(.orange)
-            }
-          }
+        if controlsVisible {
+          STTControlsView(controlHeight: controlHeight)
+            .environmentObject(pipeline)
+            .environmentObject(settings)
         }
-        .padding(.trailing, 10)
-        .padding(.top, 10)
+        if textVisible {
+          STTTextAreaView(
+            lineSpacing: lineSpacing,
+            height: baseTextAreaHeight(),
+            onTap: updateWindowHeight
+          )
+          .environmentObject(pipeline)
+          .environmentObject(settings)
+        }
+      }
+      .frame(maxWidth: .infinity)
+      .frame(maxHeight: .infinity, alignment: .top)
+    }
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
+    .contentShape(Rectangle())
 
-        // ✅ YAMNet 상태 한 줄 (HEAD에 추가 반영)
-        Text(pipeline.yamStatus)
-          .font(.caption)
-          .foregroundColor(.secondary)
-          .padding(.horizontal, 16)
-          .frame(maxWidth: .infinity, alignment: .leading)
-
-        // Transcript display - starts from bottom (HEAD 레이아웃 유지)
-        if pipeline.transcript.isEmpty {
-          Spacer()
-          VStack(alignment: .center, spacing: 10) {
-            Image(systemName: "text.bubble")
-              .font(.system(size: 40))
-              .foregroundColor(.gray.opacity(0.5))
-            Text("음성이 인식되면 여기에 표시됩니다...")
-              .foregroundColor(.gray)
-              .italic()
-          }
-          .frame(maxWidth: .infinity)
-          .padding(.bottom, 20)
-        } else {
-          GeometryReader { geometry in
-            VStack(alignment: .leading, spacing: 0) {
-              Spacer(minLength: 0)
-              Text(pipeline.transcript)
-                .font(Font.custom(settings.selectedFont, size: settings.fontSize))
-                .foregroundStyle(settings.textColor)
-                .lineSpacing(lineSpacing)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .fixedSize(horizontal: false, vertical: true)
-            }
-            .frame(width: geometry.size.width, height: geometry.size.height, alignment: .bottom)
-            .clipped()
-          }
-          .padding()
-          .padding(.bottom, 20)
+    // Hover show/hide controls
+    .onHover { hovering in
+      if hovering {
+        hoverStateTimer?.invalidate()
+        isHovering = true
+        if !pipeline.isPaused { throttledUpdateWindowHeight() }
+      } else {
+        hoverStateTimer?.invalidate()
+        hoverStateTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: false) { _ in
+          self.isHovering = false
+          if !pipeline.isPaused { throttledUpdateWindowHeight() }
         }
       }
     }
-    .contentShape(Rectangle())
-    .onTapGesture(count: 2) {
-      toggleWindowHeight()
+
+    // ✅ New API: two-parameter closure
+    .onChange(of: appDelegate.windowDidBecomeKey) { _, newValue in
+      if newValue {
+        throttledUpdateWindowHeight()
+        DispatchQueue.main.async { appDelegate.windowDidBecomeKey = false }
+      }
     }
+
+    // ✅ New API: two-parameter closure for isPaused
+    .onChange(of: pipeline.isPaused) { _, isPaused in
+      if isPaused {
+        textHideTimer?.invalidate()
+        if !showTextArea { showTextArea = true }
+        startTextHideTimer()
+        throttledUpdateWindowHeight()
+      } else {
+        textHideTimer?.invalidate()
+        if !showTextArea {
+          withAnimation(.easeInOut(duration: 0.3)) { showTextArea = true }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+          throttledUpdateWindowHeight()
+        }
+      }
+    }
+
     .onAppear {
-      // ✅ 파이프라인 시작 (캡처 → YAM → STT)
+      // 파이프라인 시작 및 설정 바인딩
       pipeline.startRecording()
+      pipeline.bindSettings(settings)
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+        throttledUpdateWindowHeight()
+      }
     }
+
+    // ✅ New API: two-parameter closure (값은 필요 없지만 경고 제거)
+    .onChange(of: settings.fontSize) { _, _ in
+      throttledUpdateWindowHeight()
+    }
+
+    .onDisappear {
+      textHideTimer?.invalidate(); textHideTimer = nil
+      hoverStateTimer?.invalidate(); hoverStateTimer = nil
+    }
+
+    .background(
+      WindowAccessor { win in
+        self.window = win
+        if let w = win {
+          w.delegate = resizeDelegate
+          w.applyLiquidGlass()
+          w.level = .floating
+          w.isMovableByWindowBackground = true
+          w.toolbar = nil
+          w.contentResizeIncrements = NSSize(width: 1, height: 1)
+          w.contentMinSize = NSSize(width: 200, height: 1)
+          w.contentMaxSize = NSSize(width: 10000, height: 10000)
+          w.styleMask.insert(.resizable)
+          w.resizeIncrements = NSSize(width: 1, height: 1)
+          if let contentView = w.contentView {
+            contentView.autoresizingMask = [.width]
+            contentView.translatesAutoresizingMaskIntoConstraints = true
+          }
+        }
+      }
+    )
   }
 }
 
@@ -113,4 +201,5 @@ struct STTView: View {
   STTView()
     .environmentObject(AudioPipeline())
     .environmentObject(SettingsManager())
+    .environmentObject(AppDelegate())
 }
