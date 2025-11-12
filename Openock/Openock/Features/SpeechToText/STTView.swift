@@ -4,9 +4,11 @@
 //
 //  Created by JiJooMaeng on 10/26/25.
 //
+
 import SwiftUI
 import AVFoundation
-import AppKit   // ✅ NSWindow 등 AppKit 타입 사용
+import AppKit        // ✅ NSWindow 등 AppKit 타입 사용
+import Combine       // ✅ Combine도 유지 (YAMCue 구독용)
 
 struct STTView: View {
   @EnvironmentObject var pipeline: AudioPipeline
@@ -128,7 +130,7 @@ struct STTView: View {
       }
     }
 
-    // ✅ New API: two-parameter closure
+    // ✅ Swift 6: two-parameter closure (appDelegate)
     .onChange(of: appDelegate.windowDidBecomeKey) { _, newValue in
       if newValue {
         throttledUpdateWindowHeight()
@@ -136,7 +138,7 @@ struct STTView: View {
       }
     }
 
-    // ✅ New API: two-parameter closure for isPaused
+    // ✅ Swift 6: two-parameter closure (pipeline.isPaused)
     .onChange(of: pipeline.isPaused) { _, isPaused in
       if isPaused {
         textHideTimer?.invalidate()
@@ -163,7 +165,12 @@ struct STTView: View {
       }
     }
 
-    // ✅ New API: two-parameter closure (값은 필요 없지만 경고 제거)
+    // ✅ (HEAD 의도) YAMCue 구독 — 오버레이 트리거
+    .onReceive(pipeline.$yamCue.compactMap { $0 }) { cue in
+      presentOverlay(for: cue, total: 3.0)
+    }
+
+    // ✅ Swift 6 두 인자 버전
     .onChange(of: settings.fontSize) { _, _ in
       throttledUpdateWindowHeight()
     }
@@ -195,6 +202,11 @@ struct STTView: View {
       }
     )
   }
+}
+
+// MARK: - Overlay 호출
+private func presentOverlay(for cue: YamCue, total: TimeInterval) {
+  OverlayController.shared.present(cue: cue, total: total)
 }
 
 #Preview {

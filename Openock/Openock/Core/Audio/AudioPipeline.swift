@@ -13,23 +13,26 @@ import SwiftUI
 
 @MainActor
 final class AudioPipeline: ObservableObject {
-  // MARK: - UI 상태
+  // MARK: - 공개 UI 상태
   @Published var yamStatus: String = "YAMNet: idle"
   @Published var transcript: String = ""
   @Published var isRecording: Bool = false
   @Published var isPaused: Bool = false
 
-  // Whistle 디버그
+  // 라우드니스/스타일
+  @Published var loudnessDB: Double = 0
+  @Published var fxStyle: SubtitleStyle = .neutral
+
+  // (HEAD 의도) YAMNet 큐 신호
+  @Published var yamCue: YamCue?
+
+  // (feat/#34 의도) Whistle 디버그
   @Published var isWhistleDetected: Bool = false
   @Published var whistleProbability: Float = 0.0
   @Published var audioEnergy: Float = 0.0
   @Published var dominantFrequency: Float = 0.0
   @Published var stage1Probability: Float = 0.0
   @Published var stage2Probability: Float = 0.0
-
-  // 라우드니스/스타일
-  @Published var loudnessDB: Double = 0
-  @Published var fxStyle: SubtitleStyle = .neutral
 
   // MARK: - 내부 구성요소
   private let capture = AudioCaptureManager()
@@ -62,10 +65,15 @@ final class AudioPipeline: ObservableObject {
 
   // MARK: - Init
   init() {
-    // YAM 상태
+    // YAM 상태 텍스트
     yamRunner.$statusText
       .receive(on: DispatchQueue.main)
       .assign(to: &$yamStatus)
+
+    // (HEAD 의도) YAM cue 신호 구독
+    yamRunner.$cue
+      .receive(on: DispatchQueue.main)
+      .assign(to: &$yamCue)
 
     // STT 자막
     if #available(macOS 15.0, *) {
@@ -272,43 +280,42 @@ final class AudioPipeline: ObservableObject {
     }
   }
 
-  // AVAudioPCMBuffer 안전 복제
+  // MARK: - AVAudioPCMBuffer 안전 복제
   private static func deepCopyPCMBuffer(_ src: AVAudioPCMBuffer) -> AVAudioPCMBuffer? {
-      let format = src.format
-      guard let dst = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: src.frameCapacity) else { return nil }
-      dst.frameLength = src.frameLength
+    let format = src.format
+    guard let dst = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: src.frameCapacity) else { return nil }
+    dst.frameLength = src.frameLength
 
-      let frames = Int(src.frameLength)
-      let channels = Int(format.channelCount)
+    let frames = Int(src.frameLength)
+    let channels = Int(format.channelCount)
 
-      switch format.commonFormat {
-      case .pcmFormatFloat32:
-          guard let s = src.floatChannelData, let d = dst.floatChannelData else { return nil }
-          let bytes = frames * MemoryLayout<Float>.size
-          for ch in 0..<channels { memcpy(d[ch], s[ch], bytes) }
-      case .pcmFormatInt16:
-          guard let s = src.int16ChannelData, let d = dst.int16ChannelData else { return nil }
-          let bytes = frames * MemoryLayout<Int16>.size
-          for ch in 0..<channels { memcpy(d[ch], s[ch], bytes) }
-      case .pcmFormatInt32:
-          guard let s = src.int32ChannelData, let d = dst.int32ChannelData else { return nil }
-          let bytes = frames * MemoryLayout<Int32>.size
-          for ch in 0..<channels { memcpy(d[ch], s[ch], bytes) }
-      default:
-          // ✅ AudioBufferList 포인터 안전 변환
-          let srcList = unsafeBitCast(src.audioBufferList, to: UnsafeMutablePointer<AudioBufferList>.self)
-          let sABL = UnsafeMutableAudioBufferListPointer(srcList)
-          let dABL = UnsafeMutableAudioBufferListPointer(dst.mutableAudioBufferList)
-
-          for i in 0..<sABL.count {
-              let byteSize = Int(sABL[i].mDataByteSize)
-              if byteSize > 0, let sp = sABL[i].mData, let dp = dABL[i].mData {
-                  memcpy(dp, sp, byteSize)
-                  dABL[i].mDataByteSize = sABL[i].mDataByteSize
-              }
-          }
+    switch format.commonFormat {
+    case .pcmFormatFloat32:
+      guard let s = src.floatChannelData, let d = dst.floatChannelData else { return nil }
+      let bytes = frames * MemoryLayout<Float>.size
+      for ch in 0..<channels { memcpy(d[ch], s[ch], bytes) }
+    case .pcmFormatInt16:
+      guard let s = src.int16ChannelData, let d = dst.int16ChannelData else { return nil }
+      let bytes = frames * MemoryLayout<Int16>.size
+      for ch in 0..<channels { memcpy(d[ch], s[ch], bytes) }
+    case .pcmFormatInt32:
+      guard let s = src.int32ChannelData, let d = dst.int32ChannelData else { return nil }
+      let bytes = frames * MemoryLayout<Int32>.size
+      for ch in 0..<channels { memcpy(d[ch], s[ch], bytes) }
+    default:
+      // AudioBufferList 포맷: 읽기 전용 포인터를 안전히 변환해 복사
+      let srcList = unsafeBitCast(src.audioBufferList, to: UnsafeMutablePointer<AudioBufferList>.self)
+      let sABL = UnsafeMutableAudioBufferListPointer(srcList)
+      let dABL = UnsafeMutableAudioBufferListPointer(dst.mutableAudioBufferList)
+      for i in 0..<sABL.count {
+        let byteSize = Int(sABL[i].mDataByteSize)
+        if byteSize > 0, let sp = sABL[i].mData, let dp = dABL[i].mData {
+          memcpy(dp, sp, byteSize)
+          dABL[i].mDataByteSize = sABL[i].mDataByteSize
+        }
       }
-      return dst
+    }
+    return dst
   }
 
   // MARK: - On/Off 적용(API)

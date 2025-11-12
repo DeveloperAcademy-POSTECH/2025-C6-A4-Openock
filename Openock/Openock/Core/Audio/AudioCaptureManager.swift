@@ -167,7 +167,7 @@ class AudioCaptureManager {
       completion(deviceID)
     }
   }
-  
+   
   /// Clean up created audio objects
   func cleanup() {
     if tapID != kAudioObjectUnknown {

@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		6C94BF152EC392170057C094 /* Lottie in Frameworks */ = {isa = PBXBuildFile; productRef = 6C94BF142EC392170057C094 /* Lottie */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXCopyFilesBuildPhase section */
 		AC238B532EBA16BC004643C7 /* Embed Libraries */ = {
 			isa = PBXCopyFilesBuildPhase;
@@ -63,6 +67,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6C94BF152EC392170057C094 /* Lottie in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -106,6 +111,7 @@
 			);
 			name = Openock;
 			packageProductDependencies = (
+				6C94BF142EC392170057C094 /* Lottie */,
 			);
 			productName = Openock;
 			productReference = 3E887E442EADB7DE00A33566 /* Openock.app */;
@@ -135,6 +141,9 @@
 			);
 			mainGroup = 3E887E3B2EADB7DE00A33566;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				6C94BF132EC392170057C094 /* XCRemoteSwiftPackageReference "lottie-spm" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 3E887E452EADB7DE00A33566 /* Products */;
 			projectDirPath = "";
@@ -390,6 +399,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		6C94BF132EC392170057C094 /* XCRemoteSwiftPackageReference "lottie-spm" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/airbnb/lottie-spm";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 4.5.2;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		6C94BF142EC392170057C094 /* Lottie */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 6C94BF132EC392170057C094 /* XCRemoteSwiftPackageReference "lottie-spm" */;
+			productName = Lottie;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 3E887E3C2EADB7DE00A33566 /* Project object */;
 }

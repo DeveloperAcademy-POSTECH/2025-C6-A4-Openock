@@ -1,3 +1,10 @@
+//
+//  YAMNetLite.swift
+//  Openock
+//
+//  Created by YONGWON SEO on 11/05/25.
+//
+
 import Foundation
 import AVFoundation
 import Accelerate
