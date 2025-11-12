@@ -274,12 +274,13 @@ class STTEngine: NSObject, ObservableObject {
     guard !text.isEmpty else { return "" }
 
     // 문장부호(., ?, !, ~, …) 뒤에서 줄바꿈
-    let formatted = text.replacingOccurrences(
-      of: "([.!?~…])\\s*",
-      with: "$1\n",
-      options: .regularExpression
-    )
-
-    return formatted.trimmingCharacters(in: .whitespacesAndNewlines)
+//    let formatted = text.replacingOccurrences(
+//      of: "([.!?~…])\\s*",
+//      with: "$1\n",
+//      options: .regularExpression
+//    )
+//    return formatted.trimmingCharacters(in: .whitespacesAndNewlines)
+    
+    return text.trimmingCharacters(in: .whitespacesAndNewlines)
   }
 }
