@@ -1,3 +1,10 @@
+//
+//  SubtitleFXEngine.swift
+//  Openock
+//
+//  Created by YONGWON SEO on 11/10/25.
+//
+
 import Foundation
 import SwiftUI
 import Combine

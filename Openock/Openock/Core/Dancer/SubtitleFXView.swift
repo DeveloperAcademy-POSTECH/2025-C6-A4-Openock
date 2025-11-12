@@ -1,3 +1,10 @@
+//
+//  SubtitleFXView.swift
+//  Openock
+//
+//  Created by YONGWON SEO on 11/10/25.
+//
+
 import SwiftUI
 
 /// 규칙
