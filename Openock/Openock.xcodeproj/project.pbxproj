@@ -24,21 +24,21 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		3E887E442EADB7DE00A33566 /* Openock.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Openock.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		3E887E442EADB7DE00A33566 /* BOSO.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BOSO.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		3E887F9A2EAE02E600A33566 /* Exceptions for "Openock" folder in "Openock" target */ = {
+		3E887F9A2EAE02E600A33566 /* Exceptions for "Openock" folder in "BOSO" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
 			);
-			target = 3E887E432EADB7DE00A33566 /* Openock */;
+			target = 3E887E432EADB7DE00A33566 /* BOSO */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
-		AC238B542EBA16BC004643C7 /* Exceptions for "Openock" folder in "Embed Libraries" phase from "Openock" target */ = {
+		AC238B542EBA16BC004643C7 /* Exceptions for "Openock" folder in "Embed Libraries" phase from "BOSO" target */ = {
 			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
 			attributesByRelativePath = {
 				ThirdParty/TFLite/lib/libtensorflowlite_c.dylib = (CodeSignOnCopy, );
@@ -54,8 +54,8 @@
 		3E887E462EADB7DE00A33566 /* Openock */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				3E887F9A2EAE02E600A33566 /* Exceptions for "Openock" folder in "Openock" target */,
-				AC238B542EBA16BC004643C7 /* Exceptions for "Openock" folder in "Embed Libraries" phase from "Openock" target */,
+				3E887F9A2EAE02E600A33566 /* Exceptions for "Openock" folder in "BOSO" target */,
+				AC238B542EBA16BC004643C7 /* Exceptions for "Openock" folder in "Embed Libraries" phase from "BOSO" target */,
 			);
 			path = Openock;
 			sourceTree = "<group>";
@@ -85,7 +85,7 @@
 		3E887E452EADB7DE00A33566 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				3E887E442EADB7DE00A33566 /* Openock.app */,
+				3E887E442EADB7DE00A33566 /* BOSO.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -93,9 +93,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		3E887E432EADB7DE00A33566 /* Openock */ = {
+		3E887E432EADB7DE00A33566 /* BOSO */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 3E887E4F2EADB7DF00A33566 /* Build configuration list for PBXNativeTarget "Openock" */;
+			buildConfigurationList = 3E887E4F2EADB7DF00A33566 /* Build configuration list for PBXNativeTarget "BOSO" */;
 			buildPhases = (
 				3E887E402EADB7DE00A33566 /* Sources */,
 				3E887E412EADB7DE00A33566 /* Frameworks */,
@@ -109,12 +109,12 @@
 			fileSystemSynchronizedGroups = (
 				3E887E462EADB7DE00A33566 /* Openock */,
 			);
-			name = Openock;
+			name = BOSO;
 			packageProductDependencies = (
 				6C94BF142EC392170057C094 /* Lottie */,
 			);
 			productName = Openock;
-			productReference = 3E887E442EADB7DE00A33566 /* Openock.app */;
+			productReference = 3E887E442EADB7DE00A33566 /* BOSO.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -149,7 +149,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				3E887E432EADB7DE00A33566 /* Openock */,
+				3E887E432EADB7DE00A33566 /* BOSO */,
 			);
 		};
 /* End PBXProject section */
@@ -298,13 +298,14 @@
 		3E887E502EADB7DF00A33566 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = BOSO_icon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = V5P96PUR94;
+				DEVELOPMENT_TEAM = TQR2QH6NMJ;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
@@ -312,7 +313,10 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/Openock/ThirdParty/TFLite/**";
 				INFOPLIST_FILE = Openock/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "보소";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "이 앱은 음성을 텍스트로 변환하여 실시간 자막을 제공합니다. 음성 인식은 사용자의 기기 내에서 처리되며, 개인정보는 외부로 전송되지 않습니다.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -322,9 +326,9 @@
 					"$(PROJECT_DIR)/Openock/ThirdParty/TFLite/lib/**",
 					"$(PROJECT_DIR)/Openock/ThirdParty/TFLite/lib",
 				);
-				MARKETING_VERSION = 0.0.1;
+				MARKETING_VERSION = 0.2.0;
 				OTHER_LDFLAGS = "-ltensorflowlite_c";
-				PRODUCT_BUNDLE_IDENTIFIER = com.mjiju06.Openock;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Openock.BOSO;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -339,13 +343,13 @@
 		3E887E512EADB7DF00A33566 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = BOSO_icon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = V5P96PUR94;
+				DEVELOPMENT_TEAM = TQR2QH6NMJ;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
@@ -353,7 +357,10 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/Openock/ThirdParty/TFLite/**";
 				INFOPLIST_FILE = Openock/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "보소";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "이 앱은 음성을 텍스트로 변환하여 실시간 자막을 제공합니다. 음성 인식은 사용자의 기기 내에서 처리되며, 개인정보는 외부로 전송되지 않습니다.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -363,9 +370,9 @@
 					"$(PROJECT_DIR)/Openock/ThirdParty/TFLite/lib/**",
 					"$(PROJECT_DIR)/Openock/ThirdParty/TFLite/lib",
 				);
-				MARKETING_VERSION = 0.0.1;
+				MARKETING_VERSION = 0.2.0;
 				OTHER_LDFLAGS = "-ltensorflowlite_c";
-				PRODUCT_BUNDLE_IDENTIFIER = com.mjiju06.Openock;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Openock.BOSO;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -389,7 +396,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		3E887E4F2EADB7DF00A33566 /* Build configuration list for PBXNativeTarget "Openock" */ = {
+		3E887E4F2EADB7DF00A33566 /* Build configuration list for PBXNativeTarget "BOSO" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				3E887E502EADB7DF00A33566 /* Debug */,

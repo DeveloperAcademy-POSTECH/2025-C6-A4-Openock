@@ -16,8 +16,8 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "3E887E432EADB7DE00A33566"
-               BuildableName = "Openock.app"
-               BlueprintName = "Openock"
+               BuildableName = "BOSO.app"
+               BlueprintName = "BOSO"
                ReferencedContainer = "container:Openock.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -45,8 +45,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "3E887E432EADB7DE00A33566"
-            BuildableName = "Openock.app"
-            BlueprintName = "Openock"
+            BuildableName = "BOSO.app"
+            BlueprintName = "BOSO"
             ReferencedContainer = "container:Openock.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -62,8 +62,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "3E887E432EADB7DE00A33566"
-            BuildableName = "Openock.app"
-            BlueprintName = "Openock"
+            BuildableName = "BOSO.app"
+            BlueprintName = "BOSO"
             ReferencedContainer = "container:Openock.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
