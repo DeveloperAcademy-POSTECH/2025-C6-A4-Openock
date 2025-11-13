@@ -55,6 +55,8 @@ extension Color {
   /// text-bg
   static let bsTextBackgroundWhite = Color(hex: "#FFFFFF")
   static let bsTextBackgroundBlack = Color(hex: "#282828")
+  static let bsTextBackgroundGray = Color(hex: "#959595")
+  static let bsTextBackgroundYellow = Color(hex: "#FFFF00")
   static let bsOutlineWhite = Color(hex: "#FFFFFF")
   static let bsOutlineBlack = Color(hex: "#282828")
   static let bsTextBackgroundHighContrast = Color(hex: "#000000")

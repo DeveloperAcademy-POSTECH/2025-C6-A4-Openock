@@ -24,6 +24,7 @@ struct MenuBarView: View {
       // MARK: - 상단 탭
       Tabs(tab: $tab)
       Divider()
+        .foregroundStyle(Color.black.opacity(0.1))
         .padding(.bottom, 3.5)
 
       // MARK: - 탭 컨텐츠
@@ -48,12 +49,15 @@ private struct Header: View {
   var body: some View {
     ZStack {
       Text("설정")
-        .font(.system(size: 11, weight: .semibold))
+        .font(.bsTitle)
+        .lineHeight(1.5, fontSize: 11)
+        .foregroundStyle(Color.bsTextBackgroundBlack)
 
       HStack {
         Spacer()
         Image(systemName: "info.circle")
           .font(.system(size: 13.42))
+          .foregroundStyle(Color.bsTextBackgroundBlack)
       }
     }
     .padding(.vertical, 5.37)
@@ -72,10 +76,11 @@ private struct Tabs: View {
           tab = t
         } label: {
           Text(t.rawValue)
-            .font(.system(size: 13, weight: tab == t ? .semibold : .regular))
+            .font(tab == t ? .bsTabBarOn : .bsTabBarOff)
+            .lineHeight(1.5, fontSize: 13)
             .padding(.vertical, 4)
             .padding(.horizontal, 6)
-            .background(tab == t ? AnyShapeStyle(.thinMaterial) : AnyShapeStyle(.clear), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .background(tab == t ? AnyShapeStyle(Color.bsGrayScale4) : AnyShapeStyle(.clear), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
         }
         .buttonStyle(.plain)
       }

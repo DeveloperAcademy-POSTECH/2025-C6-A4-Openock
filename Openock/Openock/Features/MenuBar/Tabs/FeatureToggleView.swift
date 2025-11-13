@@ -14,14 +14,15 @@ struct FeatureToggleView: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 12) {
       Text("추가 기능")
-        .font(.system(size: 14, weight: .semibold))
-        .foregroundColor(.secondary)
+        .font(.bsTitle)
+        .lineHeight(1.5, fontSize: 11)
+        .foregroundColor(Color.bsGrayScale1)
         .padding(.horizontal, 16)
 
       VStack(spacing: 0) {
         featureRow(
           title: "자막 크기 효과",
-          isOn: $settings.toggleSizeFX   // ✅ 로컬 @State → settings 바인딩으로 교체
+          isOn: $settings.toggleSizeFX
         )
 
         Divider().padding(.leading, 16)
@@ -40,11 +41,11 @@ struct FeatureToggleView: View {
       }
       .background(
         RoundedRectangle(cornerRadius: 12)
-          .fill(Color(NSColor.controlBackgroundColor))
+          .fill(Color.bsGrayScale5)
       )
       .overlay(
         RoundedRectangle(cornerRadius: 12)
-          .stroke(Color.gray.opacity(0.2))
+          .stroke(Color.bsGrayScale4, lineWidth: 0.5)
       )
     }
   }
@@ -53,7 +54,9 @@ struct FeatureToggleView: View {
   private func featureRow(title: String, isOn: Binding<Bool>) -> some View {
     HStack {
       Text(title)
-        .foregroundColor(.primary)
+        .font(.bsToggleCaption)
+        .lineHeight(1.2, fontSize: 13)
+        .foregroundColor(Color.bsTextBackgroundBlack)
         .padding(.vertical, 10)
       Spacer()
       Toggle("", isOn: isOn)

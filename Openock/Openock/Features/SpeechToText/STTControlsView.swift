@@ -23,6 +23,7 @@ struct STTControlsView: View {
         if pipeline.isPaused {
           Text("일시정지")
             .font(.bsCaption2)
+            .lineHeight(1.5, fontSize: 24)
             .foregroundStyle(settings.textColor)
         }
       }

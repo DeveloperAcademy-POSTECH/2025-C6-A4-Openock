@@ -35,6 +35,26 @@ extension Font {
     SFPro.semibold.font(size: 11)
   }
   
+  // 작게
+  static var bsSmallText: Font {
+    SFPro.medium.font(size: 11)
+  }
+  
+  // 슬라이더 핸들
+  static var bsMediumText: Font {
+    SFPro.medium.font(size: 13)
+  }
+  
+  // 크게
+  static var bsBigText: Font {
+    SFPro.medium.font(size: 20)
+  }
+  
+  // 가
+  static var bsSubtitleStyleSelect: Font {
+    SFPro.medium.font(size: 32.22)
+  }
+  
   // SF Pro Regular
   static var bsFontCaption1: Font {
     SFPro.regular.font(size: 17)
@@ -64,6 +84,11 @@ extension Font {
   // 일시정지
   static var bsCaption2: Font {
     SFPro.regular.font(size: 24)
+  }
+  
+  // 휘슬
+  static var bsTag: Font {
+    SFPro.medium.font(size: 24)
   }
 }
 
