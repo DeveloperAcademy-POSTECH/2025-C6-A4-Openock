@@ -52,7 +52,6 @@ final class AudioPipeline: ObservableObject {
   private var settings: SettingsManager?
   private var currentFontSize: CGFloat = 24
   private var currentTextColor: Color = .black
-  private var currentBackgroundKey: String = "화이트"
 
   // MARK: - 기능 토글 (OnOffManager가 갱신)
   private(set) var enableSizeFX: Bool = true
@@ -84,18 +83,22 @@ final class AudioPipeline: ObservableObject {
 
     whistleManager = WhistleIndicatorWindowManager(pipeline: self)
 
-    // dB → FX 갱신 (토글 반영)
+    // MARK: dB → FX 갱신 (토글 + 하이라이트 색 반영)
     loudness.$dB
       .receive(on: DispatchQueue.main)
       .sink { [weak self] db in
         guard let self else { return }
         self.loudnessDB = db
+
         if self.enableSizeFX {
+          // SettingsManager에서 선택한 강조색 사용 (없으면 텍스트 색으로 fallback)
+          let highlight = self.settings?.highlightColor ?? self.currentTextColor
+
           self.fxEngine.update(
             dB: db,
             baseFontSize: self.currentFontSize,
             baseTextColor: self.currentTextColor,
-            selectedBackground: self.currentBackgroundKey
+            highlightColor: highlight
           )
         } else {
           self.fxStyle = .neutral
@@ -121,7 +124,6 @@ final class AudioPipeline: ObservableObject {
     // 초기 스냅샷
     currentFontSize = settings.fontSize
     currentTextColor = settings.textColor
-    currentBackgroundKey = normalizeBackgroundKey(settings.selectedBackground)
 
     // 글꼴 크기 변경 → 상대 확대 재계산
     settings.$fontSize
@@ -133,18 +135,17 @@ final class AudioPipeline: ObservableObject {
       }
       .store(in: &settingsBag)
 
-    // 배경 프리셋 변경 → 텍스트 색/키 재스냅샷
+    // 배경 프리셋 변경 → 텍스트 색 재스냅샷
     settings.$selectedBackground
       .receive(on: DispatchQueue.main)
-      .sink { [weak self, weak settings] bg in
+      .sink { [weak self, weak settings] _ in
         guard let self, let settings else { return }
-        self.currentBackgroundKey = self.normalizeBackgroundKey(bg)
         self.currentTextColor = settings.textColor
         self.refreshFXStyle()
       }
       .store(in: &settingsBag)
 
-    // 커스텀 컬러 저장 → 텍스트 색 재스냅샷
+    // 커스텀 컬러 저장(색상 피커 등) → 텍스트 색 재스냅샷
     NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification)
       .debounce(for: .milliseconds(250), scheduler: DispatchQueue.main)
       .sink { [weak self, weak settings] _ in
@@ -157,22 +158,20 @@ final class AudioPipeline: ObservableObject {
     refreshFXStyle()
   }
 
+  // MARK: - FX Style 재계산
   private func refreshFXStyle() {
-    guard enableSizeFX else { fxStyle = .neutral; return }
+    guard enableSizeFX else {
+      fxStyle = .neutral
+      return
+    }
+    let highlight = settings?.highlightColor ?? currentTextColor
+
     fxEngine.update(
       dB: loudnessDB,
       baseFontSize: currentFontSize,
       baseTextColor: currentTextColor,
-      selectedBackground: currentBackgroundKey
+      highlightColor: highlight
     )
-  }
-
-  private func normalizeBackgroundKey(_ raw: String) -> String {
-    let lower = raw.lowercased()
-    if lower.contains("custom") || lower.contains("커스텀") { return "커스텀" }
-    if lower.contains("black")  || lower.contains("블랙")   { return "블랙" }
-    if lower.contains("white")  || lower.contains("화이트") { return "화이트" }
-    return "화이트"
   }
 
   // MARK: - 캡처 + IO
@@ -255,10 +254,8 @@ final class AudioPipeline: ObservableObject {
   // MARK: - Whistle (Sendable 경고 회피: 딥카피 후 백그라운드 처리)
   @available(macOS 15.0, *)
   private func handleWhistleDetection(buffer: AVAudioPCMBuffer) {
-    // 백그라운드로 넘기기 전에 동일 스레드에서 안전하게 복제
     guard let copied = Self.deepCopyPCMBuffer(buffer) else { return }
 
-    // 백그라운드 큐 클로저는 @Sendable 취급되므로 non-Sendable 직접 캡처 회피
     DispatchQueue.global(qos: .userInitiated).async { [weak self] in
       guard let self = self else { return }
       let detected = self.whistleDetector.detectWhistle(from: copied)
@@ -303,7 +300,6 @@ final class AudioPipeline: ObservableObject {
       let bytes = frames * MemoryLayout<Int32>.size
       for ch in 0..<channels { memcpy(d[ch], s[ch], bytes) }
     default:
-      // AudioBufferList 포맷: 읽기 전용 포인터를 안전히 변환해 복사
       let srcList = unsafeBitCast(src.audioBufferList, to: UnsafeMutablePointer<AudioBufferList>.self)
       let sABL = UnsafeMutableAudioBufferListPointer(srcList)
       let dABL = UnsafeMutableAudioBufferListPointer(dst.mutableAudioBufferList)
