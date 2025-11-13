@@ -109,6 +109,7 @@ struct STTView: View {
           .environmentObject(settings)
         }
       }
+      .padding(.bottom, 16)
       .frame(maxWidth: .infinity)
       .frame(maxHeight: .infinity, alignment: .top)
     }

@@ -26,7 +26,7 @@ struct STTControlsView: View {
             .foregroundStyle(settings.textColor)
         }
       }
-      .padding(.horizontal, 16)
+      .padding(.horizontal, 12)
       .frame(maxWidth: .infinity, alignment: .leading)
 
       HStack(alignment: .center, spacing: 8) {
@@ -45,7 +45,7 @@ struct STTControlsView: View {
         .buttonStyle(.plain)
         .disabled(!pipeline.isRecording)
       }
-      .padding(.trailing, 16)
+      .padding(.horizontal, 12)
     }
     .frame(height: controlHeight)
     .frame(maxWidth: .infinity)
