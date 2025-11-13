@@ -121,38 +121,40 @@ class WhistleIndicatorWindowManager: ObservableObject {
 private struct WhistleIndicatorContent: View {
     @EnvironmentObject var pipeline: AudioPipeline
 
-    var body: some View {
-        ZStack {
-            if pipeline.isWhistleDetected {
-                HStack(spacing: 8) {
-                    // Whistle icon from asset
-                    Image("whistle")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 30, height: 30)
-
-                    // Label
-                    Text("휘슬")
-                        .font(.system(size: 24, weight: .medium))
-                        .foregroundColor(.white)
-                }
-                .padding(.horizontal, 12)
-                .frame(width: 106, height: 48, alignment: .center)
-                .contentShape(Capsule())
-                .background(
-                    Capsule()
-                        .fill(Color.black.opacity(0.85))
-                )
-                .overlay(
-                    Capsule()
-                        .stroke(Color.blue, lineWidth: 2)
-                )
-                .clipShape(Capsule())
-                .transition(.scale.combined(with: .opacity))
-                .animation(.spring(response: 0.28, dampingFraction: 0.8), value: pipeline.isWhistleDetected)
-            }
+  var body: some View {
+    ZStack {
+      if pipeline.isWhistleDetected {
+        HStack(spacing: 8) {
+          // Whistle icon from asset
+          Image("whistle")
+            .resizable()
+            .scaledToFit()
+            .foregroundStyle(Color.bsTextBackgroundWhite)
+            .frame(width: 30, height: 30)
+          
+          // Label
+          Text("휘슬")
+            .font(.bsTag)
+            .lineHeight(1.5, fontSize: 24)
+            .foregroundColor(Color.bsTextBackgroundWhite)
         }
-        // A minimum size similar to the reference badge (kept flexible)
-        .frame(width: 106, height: 48)
+        .padding(.horizontal, 12)
+        .frame(width: 106, height: 48, alignment: .center)
+        .contentShape(Capsule())
+        .background(
+          Capsule()
+            .fill(Color.bsTextBackgroundBlack)
+        )
+        .overlay(
+          Capsule()
+            .stroke(Color.bsSub1, lineWidth: 2)
+        )
+        .clipShape(Capsule())
+        .transition(.scale.combined(with: .opacity))
+        .animation(.spring(response: 0.28, dampingFraction: 0.8), value: pipeline.isWhistleDetected)
+      }
     }
+    // A minimum size similar to the reference badge (kept flexible)
+    .frame(width: 106, height: 48)
+  }
 }

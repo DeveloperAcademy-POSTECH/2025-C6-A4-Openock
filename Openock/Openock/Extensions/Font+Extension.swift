@@ -85,6 +85,11 @@ extension Font {
   static var bsCaption2: Font {
     SFPro.regular.font(size: 24)
   }
+  
+  // 휘슬
+  static var bsTag: Font {
+    SFPro.medium.font(size: 24)
+  }
 }
 
 // MARK: - Line Height 적용 View Modifier
