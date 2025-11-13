@@ -22,8 +22,8 @@ struct STTControlsView: View {
       HStack {
         if pipeline.isPaused {
           Text("일시정지")
+            .font(.bsCaption2)
             .foregroundStyle(settings.textColor)
-            .font(.system(size: 24, weight: .regular))
         }
       }
       .padding(.horizontal, 16)
@@ -35,10 +35,12 @@ struct STTControlsView: View {
             pipeline.isPaused ? pipeline.resumeRecording() : pipeline.pauseRecording()
           }
         }) {
-          Image(systemName: pipeline.isPaused ? "play.fill" : "pause.fill")
-            .font(.system(size: 24))
+          Image(pipeline.isPaused ? "play_on" : "play_off")
+            .renderingMode(.template)
+            .resizable()
+            .scaledToFit()
+            .frame(width: 50, height: 50)
             .foregroundColor(settings.textColor)
-            .frame(width: 36, height: 36)
         }
         .buttonStyle(.plain)
         .disabled(!pipeline.isRecording)

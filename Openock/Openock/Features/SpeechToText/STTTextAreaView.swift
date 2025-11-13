@@ -12,13 +12,13 @@ struct STTTextAreaView: View {
   var body: some View {
     Group {
       if pipeline.transcript.isEmpty {
-        VStack(alignment: .center, spacing: 10) {
-          Image(systemName: "text.bubble")
-            .font(.system(size: 40))
-            .foregroundColor(.gray.opacity(0.5))
-          Text("음성이 인식되면 여기에 표시됩니다...")
-            .foregroundColor(.gray)
-            .italic()
+        VStack(alignment: .center, spacing: 18) {
+          Text("􀌁")
+            .font(.system(size: 52, weight: .medium))
+            .foregroundStyle(Color.bsGrayScale2)
+          Text("음성을 감지하면 자막이 표시됩니다.")
+            .font(.bsCaption1)
+            .foregroundStyle(Color.bsGrayScale2)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
       } else {
