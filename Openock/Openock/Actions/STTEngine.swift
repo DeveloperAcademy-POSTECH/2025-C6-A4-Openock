@@ -46,7 +46,10 @@ class STTEngine: NSObject, ObservableObject {
   private var deviceID: AudioObjectID = kAudioObjectUnknown
   private var cancellables = Set<AnyCancellable>()
   private var bufferCallCount = 0
-  
+
+  // MARK: - 텍스트 자동 정리 (5분 분량 유지)
+  private let maxTextLength: Int = 1500  // 약 5분 분량의 텍스트
+
   // MARK: - Initialization
   
   override init() {
@@ -248,6 +251,7 @@ class STTEngine: NSObject, ObservableObject {
         guard let self = self else { return }
         DispatchQueue.main.async {
           self.transcript = self.formatTranscript(newTranscript)
+          self.cleanupOldTextIfNeeded()
         }
       }
       .store(in: &cancellables)
@@ -274,12 +278,44 @@ class STTEngine: NSObject, ObservableObject {
     guard !text.isEmpty else { return "" }
 
     // 문장부호(., ?, !, ~, …) 뒤에서 줄바꿈
-    let formatted = text.replacingOccurrences(
-      of: "([.!?~…])\\s*",
-      with: "$1\n",
-      options: .regularExpression
-    )
+//    let formatted = text.replacingOccurrences(
+//      of: "([.!?~…])\\s*",
+//      with: "$1\n",
+//      options: .regularExpression
+//    )
+//    return formatted.trimmingCharacters(in: .whitespacesAndNewlines)
 
-    return formatted.trimmingCharacters(in: .whitespacesAndNewlines)
+    return text.trimmingCharacters(in: .whitespacesAndNewlines)
+  }
+
+  // MARK: - 텍스트 자동 정리
+  private func cleanupOldTextIfNeeded() {
+    // 텍스트가 maxTextLength를 초과하면 앞부분 삭제
+    guard transcript.count > maxTextLength else { return }
+
+    // 초과된 길이 + 여유분(200자) 계산
+    let excessLength = transcript.count - maxTextLength + 200
+    let startIndex = transcript.startIndex
+
+    // 삭제할 기본 위치
+    guard excessLength < transcript.count else {
+      transcript = String(transcript.suffix(maxTextLength))
+      return
+    }
+
+    var cutIndex = transcript.index(startIndex, offsetBy: excessLength, limitedBy: transcript.endIndex) ?? transcript.endIndex
+
+    // 문장 부호(. ! ? 또는 공백) 뒤에서 자르기
+    let sentenceEnders: Set<Character> = [".", "!", "?", " "]
+    while cutIndex < transcript.endIndex {
+      if sentenceEnders.contains(transcript[cutIndex]) {
+        cutIndex = transcript.index(after: cutIndex)
+        break
+      }
+      cutIndex = transcript.index(after: cutIndex)
+    }
+
+    // 텍스트 업데이트
+    transcript = String(transcript[cutIndex...])
   }
 }

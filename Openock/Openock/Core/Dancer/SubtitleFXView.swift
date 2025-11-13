@@ -43,7 +43,6 @@ public struct SubtitleFXView: View {
 
     public var body: some View {
         Text(rendered)
-            .textSelection(.enabled)
             .lineSpacing(lineSpacing)
             .multilineTextAlignment(textAlignment)  // ✅ 적용
             .frame(maxWidth: .infinity, alignment: frameAlignment(for: textAlignment))
