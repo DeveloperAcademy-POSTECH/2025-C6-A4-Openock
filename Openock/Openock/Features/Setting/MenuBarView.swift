@@ -27,10 +27,12 @@ struct MenuBarView: View {
       Tabs(tab: $tab)
         .background(Color.bsSettingsTitleBackground)
       
-      Divider()
-        .foregroundStyle(Color.black.opacity(0.1))
-        .padding(.bottom, 3.5)
-
+      Rectangle()
+        .frame(height: 0.67)
+        .foregroundStyle(Color.bsGrayScale4)
+        .padding(.vertical, 4)
+        .ignoresSafeArea()
+      
       // MARK: - 탭 컨텐츠
       VStack(alignment: .leading, spacing: 0) {
         switch tab {

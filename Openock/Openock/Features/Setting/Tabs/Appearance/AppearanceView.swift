@@ -53,9 +53,16 @@ struct AppearanceView: View {
   }
   
   var body: some View {
-    VStack(alignment: .leading, spacing: 8) {
+    VStack(alignment: .leading, spacing: 20) {
       fontSelectView
       sizeSelectView
+      
+      Rectangle()
+        .frame(height: 0.67)
+        .foregroundStyle(Color.bsGrayScale4)
+        .padding(.vertical, 4)
+        .ignoresSafeArea()
+      
       backgroundSelectView
       highlightSelectView
     }
