@@ -174,12 +174,16 @@ class STTEngine: NSObject, ObservableObject {
   /// 파이프라인이 IO를 담당할 때, 전사 파이프라인만 시작
   @MainActor
   func startTranscriptionOnly() async {
+    print("🎙️ [STTEngine] Starting transcription only...")
     await transcriberManager.startTranscription()
+    print("✅ [STTEngine] Transcription started, transcriberManager.isTranscribing: \(transcriberManager.isTranscribing)")
   }
 
   /// 파이프라인이 IO를 담당할 때, 전사 파이프라인만 중지
   func stopTranscriptionOnly() {
+    print("🛑 [STTEngine] Stopping transcription only...")
     transcriberManager.stopTranscription()
+    print("✅ [STTEngine] Transcription stopped, isTranscribing: \(transcriberManager.isTranscribing)")
   }
 
   /// 파이프라인에서 받은 PCM을 그대로 STT로 전달

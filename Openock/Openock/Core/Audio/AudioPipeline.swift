@@ -62,6 +62,9 @@ final class AudioPipeline: ObservableObject {
   private var bag = Set<AnyCancellable>()
   private var settingsBag = Set<AnyCancellable>()
 
+  // MARK: - Resume Task 관리
+  private var resumeTask: Task<Void, Never>?
+
   // MARK: - Init
   init() {
     // YAM 상태 텍스트
@@ -234,21 +237,72 @@ final class AudioPipeline: ObservableObject {
   }
 
   func pauseRecording() {
+    print("⏸ [AudioPipeline] Pausing recording...")
+
+    // 진행 중인 resume task 취소
+    if resumeTask != nil {
+      print("🔴 [AudioPipeline] Cancelling active resume task")
+      resumeTask?.cancel()
+      resumeTask = nil
+    }
+
     io.isPaused = true
     isPaused = true
+    print("✅ [AudioPipeline] Paused - io.isPaused: \(io.isPaused), isPaused: \(isPaused)")
   }
 
   func resumeRecording() {
+    print("▶️ [AudioPipeline] Resuming recording...")
+    print("📊 [AudioPipeline] Current state - io.isPaused: \(io.isPaused), isPaused: \(isPaused)")
+
+    // 이전 resume task 취소
+    resumeTask?.cancel()
+
     if #available(macOS 15.0, *) {
-      sttEngine.stopTranscriptionOnly()
-      sttEngine.clearTranscript()
-      Task { @MainActor in
-        await sttEngine.startTranscriptionOnly()
+      // STT 재시작 중에는 일시적으로 pause 상태 유지 (버퍼 무시)
+      io.isPaused = true
+      isPaused = true
+
+      // STT 재시작을 비동기로 처리
+      resumeTask = Task { @MainActor in
+        print("🔄 [AudioPipeline] Task started - stopping STT...")
+
+        // STT 중지 및 초기화
+        self.sttEngine.stopTranscriptionOnly()
+        self.sttEngine.clearTranscript()
+        self.transcript = ""
+
+        print("🔄 [AudioPipeline] Starting STT...")
+        await self.sttEngine.startTranscriptionOnly()
+
+        // Task가 취소되었는지 확인
+        if Task.isCancelled {
+          print("⚠️ [AudioPipeline] Resume task was cancelled after STT start")
+          return
+        }
+
+        // Additional delay to ensure analyzers are fully ready
+        print("⏳ [AudioPipeline] Waiting for analyzers to fully initialize...")
+        try? await Task.sleep(nanoseconds: 300_000_000) // 0.3 seconds
+
+        // Task가 취소되었는지 다시 확인
+        if Task.isCancelled {
+          print("⚠️ [AudioPipeline] Resume task was cancelled during sleep")
+          return
+        }
+
+        print("✅ [AudioPipeline] STT ready, unpausing IO...")
+        // STT가 준비된 후에 오디오 재개
+        self.io.isPaused = false
+        self.isPaused = false
+        print("✅ [AudioPipeline] Resumed - io.isPaused: \(self.io.isPaused), isPaused: \(self.isPaused)")
       }
+    } else {
+      // macOS 15.0 미만에서는 STT 없이 바로 재개
+      io.isPaused = false
+      isPaused = false
+      transcript = ""
     }
-    io.isPaused = false
-    isPaused = false
-    transcript = ""
   }
 
   // MARK: - Whistle (Sendable 경고 회피: 딥카피 후 백그라운드 처리)
