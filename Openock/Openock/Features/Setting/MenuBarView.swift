@@ -21,8 +21,12 @@ struct MenuBarView: View {
   var body: some View {
     VStack(spacing: 0) {
       Header()
+        .background(Color.bsSettingsTitleBackground)
+      
       // MARK: - 상단 탭
       Tabs(tab: $tab)
+        .background(Color.bsSettingsTitleBackground)
+      
       Divider()
         .foregroundStyle(Color.black.opacity(0.1))
         .padding(.bottom, 3.5)
@@ -41,6 +45,7 @@ struct MenuBarView: View {
       
     }
     .frame(width: 346)
+    .background(Color.bsTextBackgroundWhite)
   }
 }
 

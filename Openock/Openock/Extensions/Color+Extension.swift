@@ -60,6 +60,7 @@ extension Color {
   static let bsOutlineWhite = Color(hex: "#FFFFFF")
   static let bsOutlineBlack = Color(hex: "#282828")
   static let bsTextBackgroundHighContrast = Color(hex: "#000000")
+  static let bsSettingsTitleBackground = Color(hex: "#F9F9F9").opacity(0.1)
   
   /// mode bg
   static let bsModeBackgroundWhite = Color(hex: "#FFFFFF").opacity(0.8)
