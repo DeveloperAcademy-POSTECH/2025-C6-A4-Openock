@@ -55,6 +55,7 @@ class STTTranscriberManager: ObservableObject {
 
     // ✅ Set isTranscribing early to accept incoming audio buffers
     isTranscribing = true
+    print("✅ [STTTranscriberManager] isTranscribing set to TRUE")
 
     // Create Korean SpeechTranscriber
     koTranscriber = SpeechTranscriber(
@@ -119,7 +120,9 @@ class STTTranscriberManager: ObservableObject {
     self.koInputContinuation = koInputBuilder
     self.enInputContinuation = enInputBuilder
 
-    // Start both analyzers
+    print("🔄 [STTTranscriberManager] Starting analyzers in background tasks...")
+
+    // Start both analyzers in background (non-blocking)
     Task {
       print("🔄 [STTTranscriberManager] Starting Korean analyzer...")
       do {
@@ -145,7 +148,11 @@ class STTTranscriberManager: ObservableObject {
       await processDualTranscriptionResults(koTranscriber: koTranscriber, enTranscriber: enTranscriber)
     }
 
-    print("✅ [STTTranscriberManager] Dual-language transcription started (background processing)")
+    // Give analyzers a moment to initialize before returning
+    // This ensures continuations are ready to receive audio buffers
+    try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 second
+
+    print("✅ [STTTranscriberManager] Dual-language transcription setup complete (analyzers starting in background)")
   }
 
   /// Process dual transcription results from both Korean and English transcribers
@@ -155,6 +162,7 @@ class STTTranscriberManager: ObservableObject {
     var volatile = AttributedString("")
 
     print("🔄 [STTTranscriberManager] Starting dual transcription result processing...")
+    print("📍 [STTTranscriberManager] koTranscriber: \(koTranscriber), enTranscriber: \(enTranscriber)")
 
     // Shared actor to coordinate results
     let resultCoordinator = ResultCoordinator()
@@ -215,7 +223,9 @@ class STTTranscriberManager: ObservableObject {
       self.errorMessage = "전사 오류: \(error.localizedDescription)"
     }
 
-    isTranscribing = false
+    print("🔚 [STTTranscriberManager] processDualTranscriptionResults ended (results loop finished)")
+    // NOTE: Do NOT set isTranscribing to false here!
+    // It should only be set to false by stopTranscription()
   }
 
   /// Process combined results from both transcribers
@@ -507,7 +517,7 @@ class STTTranscriberManager: ObservableObject {
   /// Process audio buffer and send to transcriber
   func processAudio(buffer: AVAudioPCMBuffer) {
     guard isTranscribing else {
-      print("⚠️ [STTTranscriberManager] Not transcribing, ignoring buffer")
+      print("⚠️ [STTTranscriberManager] Not transcribing (isTranscribing=\(isTranscribing)), ignoring buffer")
       return
     }
 
@@ -584,6 +594,11 @@ class STTTranscriberManager: ObservableObject {
   /// Stop transcription
   func stopTranscription() {
     print("🛑 [STTTranscriberManager] Stopping dual transcription...")
+    print("📍 [STTTranscriberManager] Stop called from: \(Thread.callStackSymbols[0...3])")
+
+    // IMPORTANT: Set isTranscribing FIRST to stop accepting new audio buffers
+    isTranscribing = false
+    print("❌ [STTTranscriberManager] isTranscribing set to FALSE")
 
     // Finish both input streams
     koInputContinuation?.finish()
@@ -598,7 +613,6 @@ class STTTranscriberManager: ObservableObject {
     converter = nil
     koTranscriber = nil
     enTranscriber = nil
-    isTranscribing = false
     recentContextSentences.removeAll()
 
     // Cleanup Foundation Models
@@ -606,7 +620,7 @@ class STTTranscriberManager: ObservableObject {
       STTFoundationModels.shared.cleanup()
     }
 
-    print("✅ [STTTranscriberManager] Dual transcription stopped")
+    print("✅ [STTTranscriberManager] Dual transcription stopped, isTranscribing: \(isTranscribing)")
   }
 
   /// Clear transcript
