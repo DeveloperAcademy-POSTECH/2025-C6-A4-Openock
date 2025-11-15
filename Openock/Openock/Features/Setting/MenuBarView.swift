@@ -62,9 +62,16 @@ private struct Header: View {
 
       HStack {
         Spacer()
-        Image(systemName: "info.circle")
-          .font(.system(size: 13.42))
-          .foregroundStyle(Color.bsTextBackgroundBlack)
+        Button(action: {
+          if let url = URL(string: "https://posacademy.notion.site/Openock-2ab2b843d5af808db88af411ee6c9807?source=copy_link") {
+            NSWorkspace.shared.open(url)
+          }
+        }, label: {
+          Image(systemName: "link")
+            .font(.system(size: 14))
+            .foregroundStyle(Color.bsTextBackgroundBlack)
+        })
+        .buttonStyle(.plain)
       }
     }
     .padding(.vertical, 5.37)
