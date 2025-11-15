@@ -236,13 +236,13 @@ struct AppearanceView: View {
               Image(systemName: "xmark.circle")
                 .resizable()
                 .frame(width: 25, height: 25)
-                .foregroundStyle(Color.white)
+                .foregroundStyle(Color.bsGrayScale3)
             } else {
               Circle()
                 .fill(option.color)
                 .overlay(
                   Circle()
-                    .stroke(settings.selectedHighlight == option.rawValue ? Color.purple : Color.clear, lineWidth: 2)
+                    .stroke(settings.selectedHighlight == option.rawValue ? Color.bsSub1 : Color.clear, lineWidth: 2)
                   )
             }
           }
