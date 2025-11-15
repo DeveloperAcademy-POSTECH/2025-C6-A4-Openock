@@ -118,7 +118,7 @@ struct AppearanceView: View {
         .foregroundStyle(Color.bsGrayScale1)
       
       ZStack {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 2) {
           HStack(alignment: .bottom) {
             Text("작게")
               .font(.bsSmallText)
@@ -131,11 +131,10 @@ struct AppearanceView: View {
               .foregroundStyle(Color.bsTextBackgroundBlack)
           }
           
-          Slider(value: $settings.fontSize, in: sizeRange, step: 16)
-            .onChange(of: settings.fontSize) {
+          CustomSlider(value: $settings.fontSize)
+            .onChange(of: settings.fontSize) { _ in
               settings.save()
             }
-          
         }
         .padding(16)
         .background(Color.bsGrayScale5)
@@ -144,23 +143,6 @@ struct AppearanceView: View {
           RoundedRectangle(cornerRadius: 8)
             .stroke(Color.bsGrayScale4, lineWidth: 1)
         )
-        
-        GeometryReader { geo in
-          ZStack(alignment: .leading) {
-            Text("\(Int(settings.fontSize))pt")
-              .font(.bsMediumText)
-              .lineHeight(1.0, fontSize: 13)
-              .foregroundStyle(Color.bsTextBackgroundBlack)
-              .padding(.horizontal, 6)
-              .padding(.vertical, 3)
-              .background(
-                RoundedRectangle(cornerRadius: 8)
-                  .fill(Color.bsGrayScale4)
-              )
-              .offset(x: thumbXPosition(in: geo.size.width - 35) + 10, y: 25)
-              .animation(.easeInOut(duration: 0.15), value: settings.fontSize)
-          }
-        }
       }
     }
   }
