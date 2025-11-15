@@ -7,38 +7,37 @@
 import SwiftUI
 
 struct FeatureToggleView: View {
-  // ✅ SettingsManager를 Environment에서 받아서 실제 앱 설정과 연결
   @EnvironmentObject var settings: SettingsManager
   var onSelect: () -> Void = {}
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 12) {
+    VStack(alignment: .leading, spacing: 6) {
       Text("추가 기능")
         .font(.bsTitle)
         .lineHeight(1.5, fontSize: 11)
         .foregroundColor(Color.bsGrayScale1)
-        .padding(.horizontal, 16)
 
-      VStack(spacing: 0) {
+      VStack(spacing: 4) {
         featureRow(
           title: "자막 크기 효과",
           isOn: $settings.toggleSizeFX
         )
 
-        Divider().padding(.leading, 16)
+        Divider()
 
         featureRow(
           title: "자막 외 소리에 따른 화면 반응",
           isOn: $settings.toggleYamReactions
         )
 
-        Divider().padding(.leading, 16)
+        Divider()
 
         featureRow(
           title: "호루라기 소리 알림",
           isOn: $settings.toggleWhistle
         )
       }
+      .padding(.vertical, 8)
       .background(
         RoundedRectangle(cornerRadius: 12)
           .fill(Color.bsGrayScale5)
@@ -57,12 +56,16 @@ struct FeatureToggleView: View {
         .font(.bsToggleCaption)
         .lineHeight(1.2, fontSize: 13)
         .foregroundColor(Color.bsTextBackgroundBlack)
-        .padding(.vertical, 10)
       Spacer()
       Toggle("", isOn: isOn)
-        .toggleStyle(.switch)
-        .labelsHidden()
+        .toggleStyle(CustomSwitchToggleStyle(
+          onColor: Color.bsMain,
+          offColor: Color.bsGrayScale3,
+          width: 23,
+          height: 14,
+          knobSize: 12
+        ))
     }
-    .padding(.horizontal, 16)
+    .padding(.horizontal, 8)
   }
 }

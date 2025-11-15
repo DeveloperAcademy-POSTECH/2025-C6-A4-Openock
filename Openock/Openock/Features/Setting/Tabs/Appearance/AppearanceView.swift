@@ -53,9 +53,16 @@ struct AppearanceView: View {
   }
   
   var body: some View {
-    VStack(alignment: .leading, spacing: 8) {
+    VStack(alignment: .leading, spacing: 20) {
       fontSelectView
       sizeSelectView
+      
+      Rectangle()
+        .frame(height: 0.67)
+        .foregroundStyle(Color.bsGrayScale4)
+        .padding(.vertical, 4)
+        .ignoresSafeArea()
+      
       backgroundSelectView
       highlightSelectView
     }
@@ -111,7 +118,7 @@ struct AppearanceView: View {
         .foregroundStyle(Color.bsGrayScale1)
       
       ZStack {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 2) {
           HStack(alignment: .bottom) {
             Text("작게")
               .font(.bsSmallText)
@@ -124,11 +131,10 @@ struct AppearanceView: View {
               .foregroundStyle(Color.bsTextBackgroundBlack)
           }
           
-          Slider(value: $settings.fontSize, in: sizeRange, step: 16)
+          CustomSlider(value: $settings.fontSize)
             .onChange(of: settings.fontSize) {
               settings.save()
             }
-          
         }
         .padding(16)
         .background(Color.bsGrayScale5)
@@ -137,23 +143,6 @@ struct AppearanceView: View {
           RoundedRectangle(cornerRadius: 8)
             .stroke(Color.bsGrayScale4, lineWidth: 1)
         )
-        
-        GeometryReader { geo in
-          ZStack(alignment: .leading) {
-            Text("\(Int(settings.fontSize))pt")
-              .font(.bsMediumText)
-              .lineHeight(1.0, fontSize: 13)
-              .foregroundStyle(Color.bsTextBackgroundBlack)
-              .padding(.horizontal, 6)
-              .padding(.vertical, 3)
-              .background(
-                RoundedRectangle(cornerRadius: 8)
-                  .fill(Color.bsGrayScale4)
-              )
-              .offset(x: thumbXPosition(in: geo.size.width - 35) + 10, y: 25)
-              .animation(.easeInOut(duration: 0.15), value: settings.fontSize)
-          }
-        }
       }
     }
   }
@@ -176,30 +165,32 @@ struct AppearanceView: View {
               ZStack {
                 switch option {
                 case .black:
-                  Color.bsTextBackgroundBlack
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                  RoundedRectangle(cornerRadius: 10)
+                    .frame(width: 67, height: 67)
+                    .foregroundStyle(Color.bsTextBackgroundBlack)
                   Text("가")
                     .foregroundStyle(Color.bsTextBackgroundWhite)
                 case .white:
-                  Color.bsTextBackgroundWhite
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                  RoundedRectangle(cornerRadius: 10)
+                    .frame(width: 67, height: 67)
+                    .foregroundStyle(Color.bsTextBackgroundWhite)
                   Text("가")
                     .foregroundColor(Color.bsTextBackgroundBlack)
                 case .gray:
-                  Color.bsTextBackgroundGray
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                  RoundedRectangle(cornerRadius: 10)
+                    .frame(width: 67, height: 67)
+                    .foregroundStyle(Color.bsTextBackgroundGray)
                   Text("가")
                     .foregroundColor(Color.white)
                 case .contrast:
-                  Color.bsTextBackgroundYellow
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                  RoundedRectangle(cornerRadius: 10)
+                    .frame(width: 67, height: 67)
+                    .foregroundStyle(Color.bsTextBackgroundYellow)
                   Text("가")
                     .foregroundColor(Color.bsTextBackgroundHighContrast)
                 }
               }
               .font(.bsSubtitleStyleSelect)
-              .lineHeight(1.5, fontSize: 32.22)
-              .frame(width: 67, height: 67)
               .overlay(
                 RoundedRectangle(cornerRadius: 10)
                   .stroke(settings.selectedBackground == option.rawValue ? Color.bsSub1 : Color.clear, lineWidth: 2)
@@ -245,13 +236,13 @@ struct AppearanceView: View {
               Image(systemName: "xmark.circle")
                 .resizable()
                 .frame(width: 25, height: 25)
-                .foregroundStyle(Color.white)
+                .foregroundStyle(Color.bsGrayScale3)
             } else {
               Circle()
                 .fill(option.color)
                 .overlay(
                   Circle()
-                    .stroke(settings.selectedHighlight == option.rawValue ? Color.purple : Color.clear, lineWidth: 2)
+                    .stroke(settings.selectedHighlight == option.rawValue ? Color.bsSub1 : Color.clear, lineWidth: 2)
                   )
             }
           }
@@ -335,3 +326,4 @@ struct AppearanceView: View {
     return CGFloat(progress) * (width - thumbWidth)
   }
 }
+

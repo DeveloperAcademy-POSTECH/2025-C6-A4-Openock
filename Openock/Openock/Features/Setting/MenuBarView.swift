@@ -21,12 +21,18 @@ struct MenuBarView: View {
   var body: some View {
     VStack(spacing: 0) {
       Header()
+        .background(Color.bsSettingsTitleBackground)
+      
       // MARK: - 상단 탭
       Tabs(tab: $tab)
-      Divider()
-        .foregroundStyle(Color.black.opacity(0.1))
-        .padding(.bottom, 3.5)
-
+        .background(Color.bsSettingsTitleBackground)
+      
+      Rectangle()
+        .frame(height: 0.67)
+        .foregroundStyle(Color.bsGrayScale4)
+        .padding(.vertical, 4)
+        .ignoresSafeArea()
+      
       // MARK: - 탭 컨텐츠
       VStack(alignment: .leading, spacing: 0) {
         switch tab {
@@ -41,6 +47,7 @@ struct MenuBarView: View {
       
     }
     .frame(width: 346)
+    .background(Color.bsTextBackgroundWhite)
   }
 }
 
@@ -55,9 +62,16 @@ private struct Header: View {
 
       HStack {
         Spacer()
-        Image(systemName: "info.circle")
-          .font(.system(size: 13.42))
-          .foregroundStyle(Color.bsTextBackgroundBlack)
+        Button(action: {
+          if let url = URL(string: "https://posacademy.notion.site/Openock-2ab2b843d5af808db88af411ee6c9807?source=copy_link") {
+            NSWorkspace.shared.open(url)
+          }
+        }, label: {
+          Image(systemName: "link")
+            .font(.system(size: 14))
+            .foregroundStyle(Color.bsTextBackgroundBlack)
+        })
+        .buttonStyle(.plain)
       }
     }
     .padding(.vertical, 5.37)
