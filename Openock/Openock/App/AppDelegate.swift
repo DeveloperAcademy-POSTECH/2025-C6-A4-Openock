@@ -22,7 +22,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     }
 
     NotificationCenter.default.addObserver(forName: NSWindow.didBecomeKeyNotification, object: nil, queue: .main) { [weak self] _ in
-      self?.windowDidBecomeKey = true
+      DispatchQueue.main.async {
+        self?.windowDidBecomeKey = true
+      }
     }
   }
 }
