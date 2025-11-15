@@ -183,30 +183,32 @@ struct AppearanceView: View {
               ZStack {
                 switch option {
                 case .black:
-                  Color.bsTextBackgroundBlack
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                  RoundedRectangle(cornerRadius: 10)
+                    .frame(width: 67, height: 67)
+                    .foregroundStyle(Color.bsTextBackgroundBlack)
                   Text("가")
                     .foregroundStyle(Color.bsTextBackgroundWhite)
                 case .white:
-                  Color.bsTextBackgroundWhite
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                  RoundedRectangle(cornerRadius: 10)
+                    .frame(width: 67, height: 67)
+                    .foregroundStyle(Color.bsTextBackgroundWhite)
                   Text("가")
                     .foregroundColor(Color.bsTextBackgroundBlack)
                 case .gray:
-                  Color.bsTextBackgroundGray
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                  RoundedRectangle(cornerRadius: 10)
+                    .frame(width: 67, height: 67)
+                    .foregroundStyle(Color.bsTextBackgroundGray)
                   Text("가")
                     .foregroundColor(Color.white)
                 case .contrast:
-                  Color.bsTextBackgroundYellow
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                  RoundedRectangle(cornerRadius: 10)
+                    .frame(width: 67, height: 67)
+                    .foregroundStyle(Color.bsTextBackgroundYellow)
                   Text("가")
                     .foregroundColor(Color.bsTextBackgroundHighContrast)
                 }
               }
               .font(.bsSubtitleStyleSelect)
-              .lineHeight(1.5, fontSize: 32.22)
-              .frame(width: 67, height: 67)
               .overlay(
                 RoundedRectangle(cornerRadius: 10)
                   .stroke(settings.selectedBackground == option.rawValue ? Color.bsSub1 : Color.clear, lineWidth: 2)
