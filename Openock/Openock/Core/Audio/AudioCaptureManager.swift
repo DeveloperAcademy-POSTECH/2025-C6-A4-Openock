@@ -72,7 +72,7 @@ class AudioCaptureManager {
     
     let description = [
       kAudioAggregateDeviceNameKey: "Full System Audio Capture Device",
-      kAudioAggregateDeviceUIDKey: UUID().uuidString
+      kAudioAggregateDeviceUIDKey: "com.openock.systemaudiocapture"
     ]
     
     var aggregateID: AudioObjectID = 0
@@ -84,7 +84,7 @@ class AudioCaptureManager {
     }
     
     self.aggregateDeviceID = aggregateID
-    print("✅ [AudioCaptureManager] Aggregate device created: \(aggregateID)")
+//    print("✅ [AudioCaptureManager] Aggregate device created: \(aggregateID)")
     return aggregateID
   }
   
@@ -135,6 +135,14 @@ class AudioCaptureManager {
   /// Setup full system audio capture (all processes)
   /// - Parameter completion: Callback with device ID if successful
   func setupFullSystemCapture(completion: @escaping (AudioObjectID?) -> Void) {
+    // 0. 이미 존재하는 aggregate device 찾기
+    if let existingID = findExistingAggregateDevice() {
+      print("♻️ Using existing aggregate device: \(existingID)")
+      self.aggregateDeviceID = existingID
+      completion(existingID)
+      return
+    }
+    
     // 1. Get all audio processes
     let processList = getAllAudioProcesses()
     print("✅ [AudioCaptureManager] Found \(processList.count) audio processes")
@@ -167,6 +175,45 @@ class AudioCaptureManager {
       completion(deviceID)
     }
   }
+  
+  func findExistingAggregateDevice() -> AudioObjectID? {
+      var address = AudioObjectPropertyAddress(
+          mSelector: kAudioHardwarePropertyDevices,
+          mScope: kAudioObjectPropertyScopeGlobal,
+          mElement: kAudioObjectPropertyElementMain
+      )
+
+      var propertySize: UInt32 = 0
+      AudioObjectGetPropertyDataSize(AudioObjectID(kAudioObjectSystemObject),
+                                     &address, 0, nil, &propertySize)
+
+      let deviceCount = Int(propertySize) / MemoryLayout<AudioObjectID>.stride
+      var devices = Array(repeating: AudioObjectID(0), count: deviceCount)
+
+      AudioObjectGetPropertyData(AudioObjectID(kAudioObjectSystemObject),
+                                 &address, 0, nil, &propertySize, &devices)
+
+      for dev in devices {
+          var name: CFString = "" as CFString
+          var nameSize = UInt32(MemoryLayout<CFString>.stride)
+
+          var nameAddress = AudioObjectPropertyAddress(
+              mSelector: kAudioObjectPropertyName,
+              mScope: kAudioObjectPropertyScopeGlobal,
+              mElement: kAudioObjectPropertyElementMain
+          )
+
+          let status = AudioObjectGetPropertyData(dev, &nameAddress, 0, nil, &nameSize, &name)
+
+          if status == kAudioHardwareNoError,
+             (name as String) == "Full System Audio Capture Device" {
+              print("🔎 Found existing aggregate device: \(dev)")
+              return dev
+          }
+      }
+
+      return nil
+  }
    
   /// Clean up created audio objects
   func cleanup() {
@@ -176,11 +223,11 @@ class AudioCaptureManager {
       tapID = kAudioObjectUnknown
     }
     
-    if aggregateDeviceID != kAudioObjectUnknown {
-      AudioHardwareDestroyAggregateDevice(aggregateDeviceID)
-      print("🗑️ [AudioCaptureManager] Destroyed aggregate device: \(aggregateDeviceID)")
-      aggregateDeviceID = kAudioObjectUnknown
-    }
+//    if aggregateDeviceID != kAudioObjectUnknown {
+//      AudioHardwareDestroyAggregateDevice(aggregateDeviceID)
+//      print("🗑️ [AudioCaptureManager] Destroyed aggregate device: \(aggregateDeviceID)")
+//      aggregateDeviceID = kAudioObjectUnknown
+//    }
   }
   
   deinit {
