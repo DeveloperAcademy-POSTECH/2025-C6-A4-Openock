@@ -48,7 +48,7 @@ class STTEngine: NSObject, ObservableObject {
   private var bufferCallCount = 0
 
   // MARK: - 텍스트 자동 정리 (5분 분량 유지)
-  private let maxTextLength: Int = 1500  // 약 5분 분량의 텍스트
+  private let maxTextLength: Int = 500  // 약 5분 분량의 텍스트 1500
 
   // MARK: - Initialization
   

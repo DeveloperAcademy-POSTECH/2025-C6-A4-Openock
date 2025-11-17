@@ -23,25 +23,31 @@ struct STTTextAreaView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
       } else {
-        GeometryReader { geo in
-          VStack(alignment: .center, spacing: 0) {
-            Spacer(minLength: 0)
+        ScrollViewReader { proxy in
+          ScrollView(.vertical) {
+            VStack(alignment: .center, spacing: 0) {
+              Spacer(minLength: 0)
 
-            // ✅ 증가분 tail 스타일을 영구 적용하는 FX 렌더링
-            SubtitleFXView(
-              text: pipeline.transcript,
-              baseFontName: settings.selectedFont,
-              baseFontSize: settings.fontSize,
-              baseColor: settings.textColor,
-              style: pipeline.fxStyle,          // FXEngine이 제공하는 현재 tail 스타일
-              lineSpacing: lineSpacing,
-              textAlignment: .center             // 기존 UI와 동일하게 가운데 정렬
-            )
-            .frame(maxWidth: .infinity)
-            .fixedSize(horizontal: false, vertical: true)
+              SubtitleFXView(
+                text: pipeline.transcript,
+                baseFontName: settings.selectedFont,
+                baseFontSize: settings.fontSize,
+                baseColor: settings.textColor,
+                style: pipeline.fxStyle,
+                lineSpacing: lineSpacing,
+                textAlignment: .center
+              )
+              .frame(maxWidth: .infinity)
+              .fixedSize(horizontal: false, vertical: true)
+              .id("BOTTOM")
+            }
+            .clipped()
           }
-          .frame(width: geo.size.width, height: geo.size.height, alignment: .bottom)
-          .clipped()
+          .onChange(of: pipeline.transcript) {_ in
+            withAnimation(.easeOut(duration: 0.1)) {
+              proxy.scrollTo("BOTTOM", anchor: .bottom)
+            }
+          }
         }
       }
     }

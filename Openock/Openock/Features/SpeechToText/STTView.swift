@@ -24,16 +24,19 @@ struct STTView: View {
   @State private var titlebarColorView: NSView?
   @State private var hoverStateTimer: Timer?
 
-  private let lineSpacing: CGFloat = 4
+  private let lineSpacing: CGFloat = 40 //4
   private let controlHeight: CGFloat = 50
 
   // MARK: - Height helpers
   private func baseTextAreaHeight() -> CGFloat {
     let fontName = settings.selectedFont
     let fontSize = CGFloat(settings.fontSize)
+    
     let font = NSFont(name: fontName, size: fontSize + 24) ?? NSFont.systemFont(ofSize: fontSize + 24)
+    // 3) 실제 줄 높이
     let lineHeight = ceil(font.ascender - font.descender + font.leading)
     let textHeight = (lineHeight * 2) + lineSpacing + 24
+
     return max(textHeight, 50)
   }
 
@@ -92,7 +95,6 @@ struct STTView: View {
         .opacity(0.8)
         .glassEffect(.clear, in: .rect)
         .ignoresSafeArea(.all)
-
       VStack(spacing: 0) {
         if controlsVisible {
           STTControlsView(controlHeight: controlHeight)

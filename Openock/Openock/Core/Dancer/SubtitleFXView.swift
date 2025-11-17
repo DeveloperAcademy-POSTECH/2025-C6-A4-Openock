@@ -7,11 +7,6 @@
 
 import SwiftUI
 
-/// 규칙
-/// - 하나의 Text(AttributedString)로 렌더링
-/// - STT가 매번 "전체 문장"을 다시 보내더라도:
-///   - 이전에 존재하던 글자는 **그때의 스타일을 유지**
-///   - 새로 생긴 글자만 현재 FX 스타일(크기/색)로 추가
 public struct SubtitleFXView: View {
     public let text: String
     public let baseFontName: String
@@ -21,9 +16,7 @@ public struct SubtitleFXView: View {
     public let lineSpacing: CGFloat
     public let textAlignment: TextAlignment
 
-    /// 화면에 실제로 그려진 AttributedString
     @State private var rendered: AttributedString = .init("")
-    /// 직전에 STT로부터 받은 plain 텍스트
     @State private var lastText: String = ""
 
     public init(
@@ -46,7 +39,7 @@ public struct SubtitleFXView: View {
 
     public var body: some View {
         Text(rendered)
-            .textSelection(.enabled)
+//            .textSelection(.enabled)
             .multilineTextAlignment(textAlignment)
             .lineSpacing(lineSpacing)
             .frame(maxWidth: .infinity, alignment: frameAlignment(for: textAlignment))
@@ -71,15 +64,9 @@ public struct SubtitleFXView: View {
 // MARK: - LCS 기반 Diff 로직
 private extension SubtitleFXView {
 
-    /// STT에서 새 전체 문자열이 왔을 때,
-    /// - lastText 와 newText 사이의 LCS를 이용해
-    ///   * 유지할 글자(기존 스타일 그대로)
-    ///   * 새로 생긴 글자(현재 FX 스타일로) 를 구분해서 렌더링
     func applyDiff(newText: String) {
-        // 완전 동일하면 아무 것도 안 함
         guard newText != lastText else { return }
 
-        // 최초 렌더링: 전체를 현재 스타일로 한 번에 적용
         if lastText.isEmpty {
             if !newText.isEmpty {
                 rendered = makeTailAttributed(newText)
@@ -88,7 +75,6 @@ private extension SubtitleFXView {
             return
         }
 
-        // 문자 배열로 변환
         let oldChars = Array(lastText)
         let newChars = Array(newText)
         let m = oldChars.count
