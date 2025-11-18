@@ -25,6 +25,9 @@ struct OpenockApp: App {
         .environmentObject(settings)
         .environmentObject(appDelegate)
         .task {
+          // AppDelegate에 pipeline 연결
+          appDelegate.audioPipeline = pipeline
+
           // 한 번만 생성
           if onoffManager == nil {
             onoffManager = OnOffManager(pipeline: pipeline, settings: settings)
