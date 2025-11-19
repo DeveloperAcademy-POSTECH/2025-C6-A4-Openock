@@ -179,53 +179,83 @@ final class AudioPipeline: ObservableObject {
 
   // MARK: - 캡처 + IO
   func setupAndStart() {
+    // 이미 녹음 중이면 무시
+    if isRecording {
+      print("ℹ️ [AudioPipeline] setupAndStart() called while already recording – ignored")
+      return
+    }
+
     DispatchQueue.main.async { [weak self] in
       guard let self = self else { return }
       self.isRecording = true
       self.isPaused = false
     }
-  
-    capture.setupFullSystemCapture { [weak self] deviceID in
-      guard let self, let devID = deviceID else { return }
 
-      // STT 파이프라인은 항상 켬 (자막 기본 동작 유지)
+    capture.setupFullSystemCapture { [weak self] deviceID in
+      guard let self = self else { return }
+      guard let devID = deviceID else {
+        print("❌ [AudioPipeline] setupFullSystemCapture failed")
+        self.isRecording = false
+        self.isPaused = false
+        return
+      }
+
+      print("🎧 [AudioPipeline] Using aggregate deviceID: \(devID)")
+
+      // 👉 STT 먼저 세팅하고, 끝난 뒤에 IO 시작
       if #available(macOS 15.0, *) {
         Task { @MainActor in
+          print("🎙️ [AudioPipeline] Starting STT transcription-only pipeline...")
           await self.sttEngine.startTranscriptionOnly()
+
+          // STT 쪽에서 트랜스크라이버/애널라이저 초기화할 시간 조금 줌
+          // (예전 STTEngine에서도 0.1초 슬립 쓰던 패턴 그대로 연장)
+          try? await Task.sleep(nanoseconds: 300_000_000) // 0.3초
+
+          self.startIOWithDevice(devID)
         }
+      } else {
+        // macOS 15 미만이면 STT 없이 바로 IO
+        self.startIOWithDevice(devID)
       }
+    }
+  }
 
-      let ok = self.io.startIO(
-        deviceID: devID,
-        bufferCallback: { [weak self] pcm in
-          guard let self else { return }
+  // IO 시작 부분만 함수로 뺌 (중복 줄이려고)
+  private func startIOWithDevice(_ devID: AudioObjectID) {
+    let ok = self.io.startIO(
+      deviceID: devID,
+      bufferCallback: { [weak self] pcm in
+        guard let self else { return }
 
-          // STT: 항상 동작
-          if #available(macOS 15.0, *) {
-            self.sttEngine.feed(buffer: pcm)
-          }
+        // STT: 항상 동작
+        if #available(macOS 15.0, *) {
+          self.sttEngine.feed(buffer: pcm)
+        }
 
-          // YAM 반응: 토글 시에만
-          if self.enableYamReactions {
-            self.yamRunner.ingest(pcm)
-          }
+        // YAM 반응
+        if self.enableYamReactions {
+          self.yamRunner.ingest(pcm)
+        }
 
-          // Whistle: 토글 시에만
-          if self.enableWhistle, #available(macOS 15.0, *) {
-            self.handleWhistleDetection(buffer: pcm)
-          }
+        // Whistle (지금은 잠깐 꺼두는 걸 추천)
+        if self.enableWhistle, #available(macOS 15.0, *) {
+          self.handleWhistleDetection(buffer: pcm)
+        }
 
-          // 라우드니스: 항상 측정 (적용은 토글이 결정)
-          self.loudness.ingest(pcm)
-        },
-        levelCallback: { _ in }
-      )
+        // 라우드니스
+        self.loudness.ingest(pcm)
+      },
+      levelCallback: { _ in }
+    )
 
-      self.isRecording = ok
-      self.isPaused = false
-      if !self.enableYamReactions {
-        self.yamStatus = "YAMNet: disabled"
-      }
+    self.isRecording = ok
+    self.isPaused = false
+
+    if !ok {
+      print("❌ [AudioPipeline] io.startIO failed")
+    } else if !self.enableYamReactions {
+      self.yamStatus = "YAMNet: disabled"
     }
   }
 

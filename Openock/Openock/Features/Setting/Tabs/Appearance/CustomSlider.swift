@@ -12,12 +12,12 @@ struct CustomSlider: View {
   let steps: [CGFloat] = [18, 24, 32, 48, 64]
   
   let trackHeight: CGFloat = 0.67
-  let thumbSize: CGFloat = 8
+  let thumbSize: CGFloat = 15
   
   var body: some View {
     GeometryReader { geo in
-      let width = geo.size.width - thumbSize
-      
+      let width = geo.size.width
+
       ZStack(alignment: .leading) {
 
         // Track background
@@ -31,7 +31,7 @@ struct CustomSlider: View {
             Circle()
               .fill(Color.bsGrayScale2)
               .frame(width: 2.53, height: 2.53)
-              .offset(x: markerOffset(index: index, width: width+5))
+              .offset(x: markerOffset(index: index, width: width))
           }
         }
         .frame(height: trackHeight)
@@ -54,22 +54,22 @@ struct CustomSlider: View {
             )
             .offset(y: -20)   // 핸들 위쪽에 위치
         }
-        .offset(x: progress(width: width) - thumbSize*2)
-        .highPriorityGesture(
-          DragGesture(minimumDistance: 0)
-            .onChanged { drag in
-              let location = min(max(0, drag.location.x - thumbSize/2), width)
-              let percent = location / width
-              let approx = percent * CGFloat(steps.count - 1)
-              let index = Int(round(approx))
-              value = steps[index]
-            }
-        )
+        .position(x: progress(width: width), y: thumbSize / 2)
         .animation(.spring(response: 0.3, dampingFraction: 0.7), value: value)
       }
       .contentShape(Rectangle())
+      .gesture(
+        DragGesture(minimumDistance: 0)
+          .onChanged { drag in
+            let location = min(max(0, drag.location.x), width)
+            let percent = location / width
+            let approx = percent * CGFloat(steps.count - 1)
+            let index = Int(round(approx))
+            value = steps[index]
+          }
+      )
       .onTapGesture { location in
-        let tapX = min(max(0, location.x - thumbSize/2), width)
+        let tapX = min(max(0, location.x), width)
         let percent = tapX / width
         let approx = percent * CGFloat(steps.count - 1)
         let index = Int(round(approx))
@@ -77,6 +77,8 @@ struct CustomSlider: View {
       }
     }
     .frame(height: thumbSize)
+    .padding(.leading, 6)
+    .padding(.trailing, 16)
   }
   
   private func progress(width: CGFloat) -> CGFloat {
