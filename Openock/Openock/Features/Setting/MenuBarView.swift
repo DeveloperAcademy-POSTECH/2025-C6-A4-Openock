@@ -67,10 +67,10 @@ private struct Header: View {
             NSWorkspace.shared.open(url)
           }
         }, label: {
-          Image(systemName: "link")
-            .font(.system(size: 14))
-            .foregroundStyle(Color.bsTextBackgroundBlack)
-        })
+          Image(systemName: "info.circle")
+              .font(.system(size: 14))
+              .foregroundStyle(Color.bsTextBackgroundBlack)
+      })
         .buttonStyle(.plain)
       }
     }

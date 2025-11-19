@@ -19,7 +19,7 @@ struct FeatureToggleView: View {
 
       VStack(spacing: 4) {
         featureRow(
-          title: "자막 크기 효과",
+          title: "자막 크기 및 색상 강조",
           isOn: $settings.toggleSizeFX
         )
 

@@ -21,11 +21,11 @@ public struct SubtitleFXRules {
     /// 2단계 시작 dB (계단형 확대 시작)
     public var stepStart: Double = 65
     /// 2단계 종료 dB
-    public var stepEnd:   Double = 85
+    public var stepEnd:   Double = 83
     /// 3단계 시작 dB (색, 추가 확대 시작)
-    public var colorStart: Double = 85
+    public var colorStart: Double = 83
     /// 3단계 종료 dB (일단 고정 영역으로 취급)
-    public var colorEnd:   Double = 100
+    public var colorEnd:   Double = 95
 
     public init() {}
 }

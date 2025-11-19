@@ -32,22 +32,22 @@ class WhistleDetector {
   private let whistleFreqLow: Float = 2000.0  // 2000Hz
   private let whistleFreqHigh: Float = 4500.0  // 4500Hz
 
-  // Zero Crossing Rate 임계값 (호루라기의 규칙적인 고주파 특성)
-  private let minZCRThreshold: Float = 0.13  // 호루라기는 높은 ZCR을 가짐
-
   // 연속 감지 방지
   private var lastDetectionTime: Date?
   private let detectionCooldown: TimeInterval = 5.0  // 5초 쿨다운
 
   // 연속 검증 (여러 프레임 연속으로 감지되어야 함)
   private var consecutiveDetections: Int = 0
-  private let requiredConsecutiveDetections: Int = 2  // 즉각적인 반응을 위해 1번만
+  private let requiredConsecutiveDetections: Int = 1  // 즉각적인 반응을 위해 1번만
 
   // 오디오 링 버퍼 (최근 2초 유지 - 축구 중계용)
   private var audioRingBuffer: [[Float]] = []
   private var ringBufferMaxSize: Int = 20  // 동적으로 계산됨 (목표: 2초)
   private let ringBufferTargetSeconds: Double = 2.0  // 링 버퍼 목표 시간
   private let bufferCallInterval: Int = 10  // AudioPipeline에서 10번에 한 번 호출
+
+  // Thread-safe access to ring buffer
+  private let ringBufferQueue = DispatchQueue(label: "com.openock.whistledetector.ringbuffer", qos: .userInteractive)
   
   // MARK: - Initialization
   
@@ -107,7 +107,6 @@ class WhistleDetector {
   private(set) var lastDominantFrequency: Float = 0.0  // 주요 주파수
   private(set) var lastStage1Probability: Float = 0.0  // 1단계 확률
   private(set) var lastStage2Probability: Float = 0.0  // 2단계 확률
-  private(set) var lastZCR: Float = 0.0  // Zero Crossing Rate (고주파 특성)
 
   /// Detect whistle from audio buffer
   /// - Parameter buffer: Audio PCM buffer
@@ -136,21 +135,23 @@ class WhistleDetector {
     }
 
     // 1.5. 링 버퍼 크기를 실제 버퍼 정보로 동적 계산 (최초 1회만)
-    if audioRingBuffer.isEmpty {
-      let currentSampleRate = buffer.format.sampleRate
-      ringBufferMaxSize = calculateRingBufferSize(
-        targetSeconds: ringBufferTargetSeconds,
-        frameLength: frameLength,
-        sampleRate: currentSampleRate
-      )
-      print("📏 [WhistleDetector] Ring buffer size calculated: \(ringBufferMaxSize) buffers for \(ringBufferTargetSeconds)s")
-      print("   ↳ Frame length: \(frameLength), Sample rate: \(currentSampleRate)Hz")
-    }
+    ringBufferQueue.sync {
+      if audioRingBuffer.isEmpty {
+        let currentSampleRate = buffer.format.sampleRate
+        ringBufferMaxSize = calculateRingBufferSize(
+          targetSeconds: ringBufferTargetSeconds,
+          frameLength: frameLength,
+          sampleRate: currentSampleRate
+        )
+        print("📏 [WhistleDetector] Ring buffer size calculated: \(ringBufferMaxSize) buffers for \(ringBufferTargetSeconds)s")
+        print("   ↳ Frame length: \(frameLength), Sample rate: \(currentSampleRate)Hz")
+      }
 
-    // 1.6. 링 버퍼에 오디오 저장
-    audioRingBuffer.append(audioData)
-    if audioRingBuffer.count > ringBufferMaxSize {
-      audioRingBuffer.removeFirst()
+      // 1.6. 링 버퍼에 오디오 저장
+      audioRingBuffer.append(audioData)
+      if audioRingBuffer.count > ringBufferMaxSize {
+        audioRingBuffer.removeFirst()
+      }
     }
 
     // 2. 에너지 체크 (소리가 실제로 있는지 확인)
@@ -260,24 +261,11 @@ class WhistleDetector {
     var filteredAudio = applyBandPassFilter(audioData, lowCutoff: whistleFreqLow, highCutoff: whistleFreqHigh, sampleRate: Float(currentSampleRate))
     let filteredRMS = sqrt(filteredAudio.map { $0 * $0 }.reduce(0, +) / Float(filteredAudio.count))
 
-    // Zero Crossing Rate 계산 (호루라기의 규칙적인 고주파 특성 검증)
-    let zcr = calculateZeroCrossingRate(filteredAudio)
-    lastZCR = zcr  // UI 표시용 저장
-
     // 필터링 후 에너지가 너무 낮으면 호루라기 아님
     if filteredRMS < filteredEnergyThreshold {
       lastStage2Probability = 0.0
       lastWhistleProbability = 0.0
       consecutiveDetections = 0
-      return false
-    }
-
-    // ZCR이 너무 낮으면 규칙적인 고주파 신호가 아님 (호루라기 아님)
-    if zcr < minZCRThreshold {
-      lastStage2Probability = 0.0
-      lastWhistleProbability = 0.0
-      consecutiveDetections = 0
-      print("⚠️ [WhistleDetector] Low ZCR detected: \(zcr) < \(minZCRThreshold)")
       return false
     }
 
@@ -308,7 +296,32 @@ class WhistleDetector {
 
     let minRequiredBuffers = window0_5s  // 최소 윈도우 크기
 
-    guard audioRingBuffer.count >= minRequiredBuffers else {
+    // Thread-safe ring buffer access
+    let (bufferCount, windowsData) = ringBufferQueue.sync { () -> (Int, [(size: Int, audio: [Float], name: String)]) in
+      let count = audioRingBuffer.count
+
+      guard count >= minRequiredBuffers else {
+        return (count, [])
+      }
+
+      let windows = [
+        (size: window1_0s, name: "1.0s"),
+        (size: window0_7s, name: "0.7s"),
+        (size: window0_5s, name: "0.5s")
+      ]
+
+      var windowsData: [(size: Int, audio: [Float], name: String)] = []
+      for window in windows {
+        if count >= window.size {
+          let windowAudio = audioRingBuffer.suffix(window.size).flatMap { $0 }
+          windowsData.append((size: window.size, audio: windowAudio, name: window.name))
+        }
+      }
+
+      return (count, windowsData)
+    }
+
+    guard bufferCount >= minRequiredBuffers else {
       lastWhistleProbability = 0.0
       lastStage2Probability = 0.0
       return false
@@ -318,17 +331,8 @@ class WhistleDetector {
     var bestWindowIndex = 0
 
     // 슬라이딩 윈도우: 최근 1초, 0.7초, 0.5초 세 구간 검사
-    let windows = [
-      (size: window1_0s, name: "1.0s"),
-      (size: window0_7s, name: "0.7s"),
-      (size: window0_5s, name: "0.5s")
-    ]
-
-    for (index, window) in windows.enumerated() {
-      guard audioRingBuffer.count >= window.size else { continue }
-
-      let windowAudio = audioRingBuffer.suffix(window.size).flatMap { $0 }
-      let enhancedAudio = enhanceWhistleAudio(windowAudio, sampleRate: Float(currentSampleRate))
+    for (index, windowData) in windowsData.enumerated() {
+      let enhancedAudio = enhanceWhistleAudio(windowData.audio, sampleRate: Float(currentSampleRate))
       let prob = runModelPrediction(enhancedAudio)
 
       if prob > maxStage2Prob {
