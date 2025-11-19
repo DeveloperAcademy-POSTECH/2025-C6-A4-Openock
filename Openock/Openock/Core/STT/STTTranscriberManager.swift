@@ -70,7 +70,7 @@ class STTTranscriberManager: ObservableObject {
     }
 
     // Initialize Foundation Models for AI text improvement
-    if #available(macOS 15.1, *), enableAIImprovement {
+    if enableAIImprovement {
       do {
         try await STTFoundationModels.shared.initialize()
         print("✅ [STTTranscriberManager] Foundation Models initialized for text improvement")
@@ -145,14 +145,13 @@ class STTTranscriberManager: ObservableObject {
 
           // Foundation Models로 텍스트 개선 (타임아웃 처리)
           let rawImprovedText: String
-          if #available(macOS 15.1, *), enableAIImprovement, !originalText.isEmpty {
+          if enableAIImprovement, !originalText.isEmpty {
             rawImprovedText = await withTimeout(seconds: 5) {
               do {
                 let contextString = self.recentContextSentences.isEmpty ? nil : self.recentContextSentences.joined(separator: " ")
                 let result = try await STTFoundationModels.shared.improveText(
                   originalText,
-                  previousContext: contextString,
-                  language: "ko-KR"
+                  previousContext: contextString
                 )
                 return result
               } catch {
@@ -313,9 +312,7 @@ class STTTranscriberManager: ObservableObject {
     recentContextSentences.removeAll()
 
     // Cleanup Foundation Models
-    if #available(macOS 15.1, *) {
-      STTFoundationModels.shared.cleanup()
-    }
+    STTFoundationModels.shared.cleanup()
 
     print("✅ [STTTranscriberManager] Transcription stopped, isTranscribing: \(isTranscribing)")
   }
