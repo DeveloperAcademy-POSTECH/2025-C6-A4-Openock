@@ -45,7 +45,9 @@ struct OpenockApp: App {
         .resizable()
         .scaledToFit()
         .frame(width: 12, height: 12)   // 필요하면 크기 조절
+
     }
     .menuBarExtraStyle(.window)
+
   }
 }
