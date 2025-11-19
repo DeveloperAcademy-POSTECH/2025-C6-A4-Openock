@@ -67,7 +67,7 @@ private struct Header: View {
             NSWorkspace.shared.open(url)
           }
         }, label: {
-          Text("􀅴")
+          Image(systemName: "info.circle")
               .font(.system(size: 14))
               .foregroundStyle(Color.bsTextBackgroundBlack)
       })
