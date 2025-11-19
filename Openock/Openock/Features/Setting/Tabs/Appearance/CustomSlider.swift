@@ -53,11 +53,9 @@ struct CustomSlider: View {
                 .fill(Color.bsGrayScale4)
             )
             .offset(y: -20)   // 핸들 위쪽에 위치
-//            .allowsHitTesting(false)  // 텍스트의 탭 제스처는 무시하고 드래그만 허용
         }
         .offset(x: progress(width: width) - thumbSize*2)
-//        .contentShape(Rectangle())  // ZStack 전체를 드래그 가능하게
-        .gesture(
+        .highPriorityGesture(
           DragGesture(minimumDistance: 0)
             .onChanged { drag in
               let location = min(max(0, drag.location.x - thumbSize/2), width)
