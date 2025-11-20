@@ -42,7 +42,7 @@ struct OpenockApp: App {
       MenuBarView()
         .environmentObject(settings)
     } label: {
-      Image("LogoMenu")
+      Image("setting_logo")
         .renderingMode(.original)
         .symbolRenderingMode(.none)
         .resizable()
