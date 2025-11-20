@@ -267,53 +267,81 @@ struct AppearanceView: View {
   
   // MARK: - Font Panel
   private func openFontPickerPanel() {
-    if fontPickerPanel != nil { fontPickerPanel?.makeKeyAndOrderFront(nil); return }
+    if fontPickerPanel != nil {
+      fontPickerPanel?.makeKeyAndOrderFront(nil)
+      return
+    }
     
     let contentView = FontPickerSheetView(isPresented: Binding(
       get: { fontPickerPanel != nil },
       set: { if !$0 { closeFontPickerPanel() } }
     )).environmentObject(settings)
     
-    let panel = NSPanel(
+    let panel = KeyablePanel(
       contentRect: NSRect(x: 0, y: 0, width: 249, height: 321),
-      styleMask: [.nonactivatingPanel, .utilityWindow, .closable],
-      backing: .buffered, defer: false
+      styleMask: [.utilityWindow, .closable],
+      backing: .buffered,
+      defer: false
     )
     panel.isFloatingPanel = true
-    panel.hidesOnDeactivate = false
+    panel.becomesKeyOnlyIfNeeded = false
     panel.level = .floating
+    panel.hidesOnDeactivate = false
     panel.contentView = NSHostingView(rootView: AnyView(contentView))
     panel.makeKeyAndOrderFront(nil)
-    fontPickerPanel = panel
+    panel.collectionBehavior.insert(.transient)
+    panel.collectionBehavior.insert(.fullScreenAuxiliary)
+    // SwiftUI 호스팅 컨트롤러로 넣어주기 (포커스 동작이 더 안정적)
+    panel.contentViewController = NSHostingController(rootView: AnyView(contentView))
+    panel.setContentSize(NSSize(width: 249, height: 321))
+    panel.minSize = NSSize(width: 249, height: 321)   // 최소 사이즈 고정
+    panel.maxSize = NSSize(width: 249, height: 321)   // 최대 사이즈 고정
+    panel.invalidateRestorableState()                 // 자동 resizing 무효화
+
     
-    // 메뉴바 팝오버(즉 MenuBarView) 윈도우 찾기 — 너비 기준으로 시도
-    if let menuBarWindow = NSApp.windows.first(where: {
-      // NSHostingView의 제네릭 문제 피하려면 contentView 타입 확인 대신 너비/위치로 유추
-      abs($0.frame.width - 346) < 2 && $0.isVisible
-    }) {
-      let rect = menuBarWindow.frame
+    // 부모(MenuBarExtra) 윈도우 찾기
+    if let menuBarWindow = NSApp.windows.first(where: { abs($0.frame.width - 346) < 2 && $0.isVisible }) {
+      // 부모 윈도우에 자식으로 추가하면 부모가 닫히지 않음
+      menuBarWindow.addChildWindow(panel, ordered: .above)
       
-      // 오른쪽에 붙이기 (원하면 왼쪽으로 바꿀 수 있음)
-      let origin = CGPoint(x: rect.minX - 257, y: rect.minY - 30) // 위쪽 정렬
+      // 위치 조정: 부모 기준으로 맞추기
+      let parentFrame = menuBarWindow.frame
+      let origin = CGPoint(x: parentFrame.minX - panel.frame.width - 10, // 필요에 따라 조정
+                           y: parentFrame.minY + (parentFrame.height - panel.frame.height) / 2)
       panel.setFrameOrigin(origin)
-      
-      
-      fontGlobalMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak panel] _ in
-        guard let panel = panel else { return }
-        let loc = NSEvent.mouseLocation
-        if !panel.frame.contains(loc) { closeFontPickerPanel() }
-      }
-      fontLocalMonitor = NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak panel] event in
-        guard let panel = panel else { return event }
-        let loc = event.window?.convertToScreen(NSRect(origin: event.locationInWindow, size: .zero)).origin ?? NSEvent.mouseLocation
-        if !panel.frame.contains(loc) { closeFontPickerPanel() }
-        return event
+    }
+    
+    fontGlobalMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak panel] _ in
+      guard let panel = panel else { return }
+      let loc = NSEvent.mouseLocation
+      if !panel.frame.contains(loc) {
+        closeFontPickerPanel()
       }
     }
+
+    fontLocalMonitor = NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak panel] event in
+      guard let panel = panel else { return event }
+      let loc = event.window?.convertToScreen(NSRect(origin: event.locationInWindow, size: .zero)).origin
+                  ?? NSEvent.mouseLocation
+      if !panel.frame.contains(loc) {
+        closeFontPickerPanel()
+        return nil
+      }
+      return event
+    }
+    
+  
+    fontPickerPanel = panel
   }
   
   private func closeFontPickerPanel() {
-    if let panel = fontPickerPanel { panel.close() }
+    if let panel = fontPickerPanel {
+      // 부모 윈도우에서 자식 삭제
+      if let parent = panel.parent {
+        parent.removeChildWindow(panel)
+      }
+      panel.close()
+    }
     if let g = fontGlobalMonitor { NSEvent.removeMonitor(g); fontGlobalMonitor = nil }
     if let l = fontLocalMonitor { NSEvent.removeMonitor(l); fontLocalMonitor = nil }
     fontPickerPanel = nil
@@ -327,3 +355,7 @@ struct AppearanceView: View {
   }
 }
 
+class KeyablePanel: NSPanel {
+    override var canBecomeKey: Bool { true }
+    override var canBecomeMain: Bool { false }
+}
