@@ -1,17 +1,13 @@
 {
   "images" : [
     {
-      "filename" : "setting_logo.svg",
-      "idiom" : "universal",
+      "filename" : "setting_logo 1.svg",
+      "idiom" : "mac",
       "scale" : "1x"
     },
     {
-      "idiom" : "universal",
+      "idiom" : "mac",
       "scale" : "2x"
-    },
-    {
-      "idiom" : "universal",
-      "scale" : "3x"
     }
   ],
   "info" : {
