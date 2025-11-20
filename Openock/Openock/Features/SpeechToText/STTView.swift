@@ -20,11 +20,10 @@ struct STTView: View {
   @State private var textHideTimer: Timer?
   @State private var isHovering = false
   @State private var lastHeightUpdate = Date.distantPast
-  @State private var resizeDelegate = WindowResizeDelegate()
   @State private var titlebarColorView: NSView?
   @State private var hoverStateTimer: Timer?
 
-  private let lineSpacing: CGFloat = 40 //4
+  private let lineSpacing: CGFloat = 4
   private let controlHeight: CGFloat = 50
 
   // MARK: - Height helpers
@@ -41,13 +40,16 @@ struct STTView: View {
   }
 
   private func totalWindowHeight() -> CGFloat {
-    let controlsVisible = pipeline.isPaused || isHovering
+    //let controlsVisible = pipeline.isPaused //|| isHovering
+    let controlsSpace: CGFloat = controlHeight
+    
     let textVisible = pipeline.isPaused ? showTextArea : true
     var height: CGFloat = 0
-    if controlsVisible { height += controlHeight }
+    //if controlsVisible { height += controlHeight }
+    height += controlsSpace
     if textVisible { height += baseTextAreaHeight() }
-    if !controlsVisible && !textVisible { height = 1 }
-    return height
+    //if !controlsVisible && !textVisible { height = 1 }
+    return max(height, 1)
   }
 
   private func updateWindowHeight() {
@@ -87,7 +89,6 @@ struct STTView: View {
 
   // MARK: - Body
   var body: some View {
-    let controlsVisible = pipeline.isPaused || isHovering
     let textVisible = pipeline.isPaused ? showTextArea : true
 
     ZStack(alignment: .top) {
@@ -96,15 +97,15 @@ struct STTView: View {
         .glassEffect(.clear, in: .rect)
         .ignoresSafeArea(.all)
       VStack(spacing: 0) {
-        if controlsVisible {
+        ZStack {
           STTControlsView(controlHeight: controlHeight)
-            .environmentObject(pipeline)
-            .environmentObject(settings)
+            .opacity((isHovering || pipeline.isPaused) ? 1 : 0)
         }
+        .frame(height: controlHeight)
+      
         if textVisible {
           STTTextAreaView(
             lineSpacing: lineSpacing,
-            height: baseTextAreaHeight(),
             onTap: updateWindowHeight
           )
           .environmentObject(pipeline)
@@ -112,7 +113,7 @@ struct STTView: View {
         }
       }
       .padding(.bottom, 16)
-      .frame(maxWidth: .infinity)
+      .frame(maxWidth: .infinity, maxHeight: .infinity)
       .frame(maxHeight: .infinity, alignment: .top)
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -120,17 +121,7 @@ struct STTView: View {
 
     // Hover show/hide controls
     .onHover { hovering in
-      if hovering {
-        hoverStateTimer?.invalidate()
-        isHovering = true
-        if !pipeline.isPaused { throttledUpdateWindowHeight() }
-      } else {
-        hoverStateTimer?.invalidate()
-        hoverStateTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: false) { _ in
-          self.isHovering = false
-          if !pipeline.isPaused { throttledUpdateWindowHeight() }
-        }
-      }
+      isHovering = hovering
     }
 
     // ✅ Swift 6: two-parameter closure (appDelegate)
@@ -187,7 +178,7 @@ struct STTView: View {
       WindowAccessor { win in
         self.window = win
         if let w = win {
-          w.delegate = resizeDelegate
+          //w.delegate = resizeDelegate
           w.applyLiquidGlass()
           w.level = .floating
           w.isMovableByWindowBackground = true
@@ -198,7 +189,7 @@ struct STTView: View {
           w.styleMask.insert(.resizable)
           w.resizeIncrements = NSSize(width: 1, height: 1)
           if let contentView = w.contentView {
-            contentView.autoresizingMask = [.width]
+            contentView.autoresizingMask = [.width, .height]
             contentView.translatesAutoresizingMaskIntoConstraints = true
           }
         }

@@ -83,7 +83,7 @@ extension Font {
   
   // 일시정지
   static var bsCaption2: Font {
-    SFPro.regular.font(size: 24)
+    SFPro.regular.font(size: 20)
   }
   
   // 휘슬

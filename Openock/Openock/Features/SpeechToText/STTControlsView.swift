@@ -27,7 +27,7 @@ struct STTControlsView: View {
             .foregroundStyle(settings.textColor)
         }
       }
-      .padding(.horizontal, 12)
+      .padding(.horizontal,12)
       .frame(maxWidth: .infinity, alignment: .leading)
 
       HStack(alignment: .center, spacing: 8) {
@@ -40,7 +40,7 @@ struct STTControlsView: View {
             .renderingMode(.template)
             .resizable()
             .scaledToFit()
-            .frame(width: 50, height: 50)
+            .frame(width: 36, height: 36)
             .foregroundColor(settings.textColor)
         }
         .buttonStyle(.plain)

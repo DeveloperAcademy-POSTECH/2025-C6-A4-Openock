@@ -6,7 +6,6 @@ struct STTTextAreaView: View {
   @EnvironmentObject var settings: SettingsManager
 
   let lineSpacing: CGFloat
-  let height: CGFloat
   let onTap: () -> Void
 
   var body: some View {
@@ -21,7 +20,7 @@ struct STTTextAreaView: View {
             .lineHeight(1.5, fontSize: 24)
             .foregroundStyle(Color.bsGrayScale2)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .frame(maxWidth: .infinity)
       } else {
         ScrollViewReader { proxy in
           ScrollView(.vertical) {
@@ -53,7 +52,6 @@ struct STTTextAreaView: View {
     }
     .padding(.horizontal, 16)
     .padding(.vertical, 12)
-    .frame(height: height)
     .contentShape(Rectangle())
     .onTapGesture { onTap() }
   }

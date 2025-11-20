@@ -22,18 +22,14 @@ struct OverlayTextView: View {
 
       HStack {
          LottieView(name: cue == .cheer ? "cheer" : "boo", loopMode: .playOnce)
-           .frame(maxWidth: .infinity, alignment: .leading)
+          .frame(maxWidth: 268)
            .padding(.vertical, 24)
-           // .padding(.horizontal, 40)
-           // .padding(.vertical, 24)
-
-          Spacer()
+        Spacer()
+          .border(.red)
 
          LottieView(name: cue == .cheer ? "cheer" : "boo", loopMode: .playOnce)
-           .frame(maxWidth: .infinity, alignment: .trailing)
+           .frame(maxWidth: 268)
            .padding(.vertical, 24)
-           // .padding(.horizontal, 40)
-           // .padding(.vertical, 24)
        }
        .padding(.horizontal, 0)
     }
