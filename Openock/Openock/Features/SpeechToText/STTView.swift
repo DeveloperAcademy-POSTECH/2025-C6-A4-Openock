@@ -24,9 +24,128 @@ struct STTView: View {
   @State private var hoverStateTimer: Timer?
   @State private var keyEventMonitor: Any?
 
+  // 트래픽 라이트 버튼 자동 숨김을 위한 상태 추가
+  @State private var trafficLightHideTimer: Timer?
+  @State private var isTrafficLightsHidden = false  // 타이틀바 숨김 상태 추적
+  @State private var titlebarOverlayView: NSView?  // 타이틀바 오버레이 뷰
+  @State private var isPauseButtonVisible = true  // 일시정지 버튼 표시 상태
+  
   private let lineSpacing: CGFloat = 4
-  private let controlHeight: CGFloat = 50
 
+  
+  //트래픽 라이트 버튼 숨김/표시 함수
+  private func hideTrafficLights() {
+    guard let w = window else { return }
+    let buttons: [NSWindow.ButtonType] = [.closeButton, .miniaturizeButton, .zoomButton]
+    buttons.forEach { buttonType in
+      if let button = w.standardWindowButton(buttonType) {
+        NSAnimationContext.runAnimationGroup { context in
+          context.duration = 0.3
+          context.allowsImplicitAnimation = true
+          button.animator().alphaValue = 0.0
+        }
+      }
+    }
+    // 타이틀바 영역도 함께 숨기기
+    isTrafficLightsHidden = true
+    showTitlebarOverlay()
+    // 일시정지 상태가 아닐 때만 일시정지 버튼 숨김
+    if !pipeline.isPaused {
+      isPauseButtonVisible = false
+    }
+  }
+
+  private func showTrafficLights() {
+    guard let w = window else { return }
+    let buttons: [NSWindow.ButtonType] = [.closeButton, .miniaturizeButton, .zoomButton]
+    buttons.forEach { buttonType in
+      if let button = w.standardWindowButton(buttonType) {
+        NSAnimationContext.runAnimationGroup { context in
+          context.duration = 0.3
+          context.allowsImplicitAnimation = true
+          button.animator().alphaValue = 1.0
+        }
+      }
+    }
+    // 타이틀바 영역 다시 표시
+    isTrafficLightsHidden = false
+    hideTitlebarOverlay()
+    // 일시정지 버튼도 함께 표시
+    isPauseButtonVisible = true
+  }
+  
+  //타이틀바 영역을 투명하게 덮는 오버레이 표시
+  private func showTitlebarOverlay() {
+    guard let w = window, let contentView = w.contentView else { return }
+    
+    // 기존 오버레이 제거
+    hideTitlebarOverlay()
+    
+    // 타이틀바 높이
+    let titlebarHeight: CGFloat = 28
+    
+    // contentView의 bounds 기준으로 타이틀바 영역 계산
+    let contentBounds = contentView.bounds
+    let titlebarRect = NSRect(
+      x: 0,
+      y: contentBounds.height - titlebarHeight,
+      width: contentBounds.width,
+      height: titlebarHeight
+    )
+    
+    // 투명한 오버레이 뷰 생성
+    let overlayView = NSView(frame: titlebarRect)
+    overlayView.wantsLayer = true
+    
+    // 배경색과 동일하게 설정하여 타이틀바 영역 전체를 덮음
+    let backgroundColor = NSColor(settings.backgroundColor)
+    overlayView.layer?.backgroundColor = backgroundColor.withAlphaComponent(0.8).cgColor
+    overlayView.autoresizingMask = [.width, .minYMargin]
+    
+    // 윈도우의 contentView에 추가 (상단에 배치)
+    contentView.addSubview(overlayView, positioned: .above, relativeTo: nil)
+    titlebarOverlayView = overlayView
+      
+    // 애니메이션으로 페이드인
+    overlayView.alphaValue = 0.0
+    NSAnimationContext.runAnimationGroup { context in
+      context.duration = 0.3
+      overlayView.animator().alphaValue = 1.0
+    }
+  }
+  
+  //타이틀바 오버레이 제거
+  private func hideTitlebarOverlay() {
+    guard let overlayView = titlebarOverlayView else { return }
+    
+    NSAnimationContext.runAnimationGroup { context in
+      context.duration = 0.3
+      overlayView.animator().alphaValue = 0.0
+    } completionHandler: {
+      overlayView.removeFromSuperview()
+      self.titlebarOverlayView = nil
+    }
+  }
+  
+  //초기 타이머 설정
+  private func setupTrafficLightAutoHide() {
+    // 초기 타이머 시작 (3초 후 숨김)
+    startTrafficLightHideTimer()
+  }
+  
+  private func startTrafficLightHideTimer() {
+    trafficLightHideTimer?.invalidate()
+    // 3초 후 숨김 (원하는 시간으로 조절 가능)
+    trafficLightHideTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: false) { _ in
+      self.hideTrafficLights()
+    }
+  }
+  
+  private func cleanupTrafficLightAutoHide() {
+    trafficLightHideTimer?.invalidate()
+    trafficLightHideTimer = nil
+  }
+  
   // MARK: - Height helpers
   private func baseTextAreaHeight() -> CGFloat {
     let fontName = settings.selectedFont
@@ -40,14 +159,15 @@ struct STTView: View {
     return max(textHeight, 50)
   }
   private func totalWindowHeight() -> CGFloat {
-      let controlsSpace: CGFloat = controlHeight // 50
       let bottomPadding: CGFloat = 16
       
       // ⭐️ 텍스트 영역이 표시될 때 필요한 '최대' 높이를 기준으로 항상 계산합니다.
       let requiredTextHeight = baseTextAreaHeight()
       
+      let titlebarHeight: CGFloat = isTrafficLightsHidden ? 0 : 28
+    
       // 이제 텍스트 영역의 표시 여부와 상관없이 항상 최대 필요 높이를 반환합니다.
-      return max(controlsSpace + requiredTextHeight + bottomPadding, 1)
+      return max(requiredTextHeight + bottomPadding, 1)
   }
 
   private func updateWindowHeight() {
@@ -88,7 +208,8 @@ struct STTView: View {
 
   // MARK: - Body
   var body: some View {
-    let textVisible = pipeline.isPaused ? showTextArea : true
+    // 텍스트 영역 항상 표시 (플레이스홀더 또는 자막)
+    let textVisible = true
 
     ZStack(alignment: .top) {
       settings.backgroundColor
@@ -96,12 +217,6 @@ struct STTView: View {
         .glassEffect(.clear, in: .rect)
         .ignoresSafeArea(.all)
       VStack(spacing: 0) {
-        ZStack {
-          STTControlsView(controlHeight: controlHeight)
-            .opacity((isHovering || pipeline.isPaused) ? 1 : 0)
-        }
-        .frame(height: controlHeight)
-      
         if textVisible {
           STTTextAreaView(
             lineSpacing: lineSpacing
@@ -109,11 +224,36 @@ struct STTView: View {
           .environmentObject(pipeline)
           .environmentObject(settings)
         }
-        Spacer()
       }
       .padding(.bottom, 16)
       .frame(maxWidth: .infinity, maxHeight: .infinity)
       .frame(maxHeight: .infinity, alignment: .top)
+        
+      VStack {
+        Spacer()
+        HStack {
+          Spacer()
+          if isPauseButtonVisible {
+            Button(action: {
+              if pipeline.isRecording {
+                pipeline.isPaused ? pipeline.resumeRecording() : pipeline.pauseRecording()
+              }
+            }) {
+              Image(pipeline.isPaused ? "play_on" : "play_off")
+                .renderingMode(.template)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 36, height: 36)
+                .foregroundColor(settings.textColor)
+            }
+            .buttonStyle(.plain)
+            .disabled(!pipeline.isRecording)
+            .padding(.trailing, 16)
+            .padding([.top, .bottom], 12)
+            .transition(.opacity)
+          }
+        }
+      }
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity)
     .contentShape(Rectangle())
@@ -121,6 +261,14 @@ struct STTView: View {
     // Hover show/hide controls
     .onHover { hovering in
       isHovering = hovering
+      if hovering {
+        // 호버링 시작: 버튼들 표시
+        showTrafficLights()
+        trafficLightHideTimer?.invalidate()
+      } else {
+        // 호버링 종료: 타이머 시작 (일시정지 상태면 재생 버튼은 유지)
+        startTrafficLightHideTimer()
+      }
     }
 
     // ✅ Swift 6: two-parameter closure (appDelegate)
@@ -133,18 +281,25 @@ struct STTView: View {
     // ✅ Swift 6: two-parameter closure (pipeline.isPaused)
     .onChange(of: pipeline.isPaused) { _, isPaused in
       if isPaused {
+        // 일시정지 상태: 재생 버튼 항상 표시
+        isPauseButtonVisible = true
+        trafficLightHideTimer?.invalidate()
+
         textHideTimer?.invalidate()
         if !showTextArea { showTextArea = true }
         startTextHideTimer()
-        throttledUpdateWindowHeight()
+        // 일시정지 시에는 윈도우 높이 변경하지 않음 (현재 크기 유지)
       } else {
+        // 재생 상태: 호버링 상태가 아니면 타이머 시작
+        if !isHovering {
+          startTrafficLightHideTimer()
+        }
+
         textHideTimer?.invalidate()
         if !showTextArea {
           withAnimation(.easeInOut(duration: 0.3)) { showTextArea = true }
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-          throttledUpdateWindowHeight()
-        }
+        // 재생 시작 시에도 윈도우 높이 변경하지 않음 (현재 크기 유지)
       }
     }
 
@@ -178,6 +333,7 @@ struct STTView: View {
     .onDisappear {
       textHideTimer?.invalidate(); textHideTimer = nil
       hoverStateTimer?.invalidate(); hoverStateTimer = nil
+      cleanupTrafficLightAutoHide()
 
       // 키 이벤트 모니터 제거
       if let monitor = keyEventMonitor {
@@ -201,9 +357,26 @@ struct STTView: View {
             contentView.autoresizingMask = [.width, .height]
             contentView.translatesAutoresizingMaskIntoConstraints = true
           }
+          //윈도우가 설정된 후 트래픽 라이트 자동 숨김 설정
+          DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            self.setupTrafficLightAutoHide()
+          }
         }
       }
     )
+    .onChange(of: window?.frame) { _, _ in
+      // 윈도우 크기 변경 시 오버레이 위치와 크기 업데이트
+      if isTrafficLightsHidden, let overlayView = titlebarOverlayView, let w = window, let contentView = w.contentView {
+        let titlebarHeight: CGFloat = 28
+        let contentBounds = contentView.bounds
+        overlayView.frame = NSRect(
+          x: 0,
+          y: contentBounds.height - titlebarHeight,
+          width: contentBounds.width,
+          height: titlebarHeight
+        )
+      }
+    }
   }
 }
 
