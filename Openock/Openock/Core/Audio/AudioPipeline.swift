@@ -291,6 +291,11 @@ final class AudioPipeline: ObservableObject {
     print("▶️ [AudioPipeline] Resuming recording...")
     print("📊 [AudioPipeline] Current state - io.isPaused: \(io.isPaused), isPaused: \(isPaused)")
 
+    // 재생 버튼 누를 때 오디오 탭 갱신 (새로운 오디오 프로세스 감지)
+    DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+      self?.capture.refreshAudioTap()
+    }
+
     // 이전 resume task 취소
     resumeTask?.cancel()
 

@@ -20,8 +20,6 @@ class AudioCaptureManager {
 
   var tapID: AudioObjectID = kAudioObjectUnknown
   var aggregateDeviceID: AudioObjectID = kAudioObjectUnknown
-  private var monitoringTimer: Timer?
-  private var lastProcessCount: Int = 0
 
   /// Get all audio processes currently running on the system
   func getAllAudioProcesses() -> [AudioObjectID] {
@@ -140,38 +138,8 @@ class AudioCaptureManager {
     return true
   }
 
-  /// Start monitoring for new audio processes
-  private func startMonitoring() {
-    // Get initial process count
-    lastProcessCount = getAllAudioProcesses().count
-    print("✅ [AudioCaptureManager] Started monitoring (initial process count: \(lastProcessCount))")
-
-    // Check for new processes every 2 seconds
-    monitoringTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
-      self?.checkForNewProcesses()
-    }
-  }
-
-  /// Stop monitoring
-  func stopMonitoring() {
-    monitoringTimer?.invalidate()
-    monitoringTimer = nil
-    print("🛑 [AudioCaptureManager] Stopped monitoring")
-  }
-
-  /// Check if new processes have been added
-  private func checkForNewProcesses() {
-    let currentProcessCount = getAllAudioProcesses().count
-
-    if currentProcessCount != lastProcessCount {
-      print("🔔 [AudioCaptureManager] Process count changed: \(lastProcessCount) → \(currentProcessCount)")
-      lastProcessCount = currentProcessCount
-      refreshAudioTap()
-    }
-  }
-
   /// Refresh the audio tap with all current processes
-  private func refreshAudioTap() {
+  func refreshAudioTap() {
     print("🔄 [AudioCaptureManager] Refreshing audio tap...")
 
     guard aggregateDeviceID != kAudioObjectUnknown else {
@@ -251,12 +219,8 @@ class AudioCaptureManager {
 
     print("⏳ [AudioCaptureManager] Waiting for device to be ready...")
     // Give the aggregate device time to initialize (CoreAudio needs time)
-    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
       print("✅ [AudioCaptureManager] Full system audio capture ready! Device ID: \(deviceID)")
-
-      // Start monitoring for new processes
-      self?.startMonitoring()
-
       completion(deviceID)
     }
   }

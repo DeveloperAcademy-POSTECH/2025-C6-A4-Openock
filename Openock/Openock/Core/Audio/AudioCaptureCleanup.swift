@@ -134,7 +134,6 @@ extension AudioCaptureManager {
   func cleanup() {
     print("🧹 [AudioCaptureManager] Starting cleanup...")
 
-    stopMonitoring()
     // Also proactively clean up any orphan process taps this run may have created
     cleanupOrphanProcessTaps()
 

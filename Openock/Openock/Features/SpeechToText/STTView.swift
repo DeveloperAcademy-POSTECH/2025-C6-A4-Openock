@@ -22,6 +22,7 @@ struct STTView: View {
   @State private var lastHeightUpdate = Date.distantPast
   @State private var titlebarColorView: NSView?
   @State private var hoverStateTimer: Timer?
+  @State private var keyEventMonitor: Any?
 
   private let lineSpacing: CGFloat = 4
   private let controlHeight: CGFloat = 50
@@ -154,6 +155,21 @@ struct STTView: View {
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
         throttledUpdateWindowHeight()
       }
+
+      // 스페이스바 전역 모니터 설정
+      keyEventMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+        if event.keyCode == 49 { // 49 = 스페이스바
+          if pipeline.isRecording {
+            if pipeline.isPaused {
+              pipeline.resumeRecording()
+            } else {
+              pipeline.pauseRecording()
+            }
+          }
+          return nil // 이벤트 소비
+        }
+        return event
+      }
     }
     // ✅ (HEAD 의도) YAMCue 구독 — 오버레이 트리거
     .onReceive(pipeline.$yamCue.compactMap { $0 }) { cue in
@@ -162,6 +178,12 @@ struct STTView: View {
     .onDisappear {
       textHideTimer?.invalidate(); textHideTimer = nil
       hoverStateTimer?.invalidate(); hoverStateTimer = nil
+
+      // 키 이벤트 모니터 제거
+      if let monitor = keyEventMonitor {
+        NSEvent.removeMonitor(monitor)
+        keyEventMonitor = nil
+      }
     }
     .background(
       WindowAccessor { win in
@@ -174,6 +196,7 @@ struct STTView: View {
           w.contentResizeIncrements = NSSize(width: 1, height: 1)
           w.styleMask.insert(.resizable)
           w.resizeIncrements = NSSize(width: 1, height: 1)
+
           if let contentView = w.contentView {
             contentView.autoresizingMask = [.width, .height]
             contentView.translatesAutoresizingMaskIntoConstraints = true
