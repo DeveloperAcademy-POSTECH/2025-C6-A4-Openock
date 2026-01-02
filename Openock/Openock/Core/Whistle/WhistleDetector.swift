@@ -123,7 +123,7 @@ class WhistleDetector {
     }
 
     let frameLength = Int(buffer.frameLength)
-    var audioData = Array(UnsafeBufferPointer(start: channelData, count: frameLength))
+    let audioData = Array(UnsafeBufferPointer(start: channelData, count: frameLength))
 
     // 쿨다운 체크 (최근 감지 후 일정 시간 경과 확인) - 하지만 값은 계속 업데이트
     var inCooldown = false
@@ -258,7 +258,7 @@ class WhistleDetector {
     }
 
     // Band-pass filter 적용 (호루라기 검증용)
-    var filteredAudio = applyBandPassFilter(audioData, lowCutoff: whistleFreqLow, highCutoff: whistleFreqHigh, sampleRate: Float(currentSampleRate))
+    let filteredAudio = applyBandPassFilter(audioData, lowCutoff: whistleFreqLow, highCutoff: whistleFreqHigh, sampleRate: Float(currentSampleRate))
     let filteredRMS = sqrt(filteredAudio.map { $0 * $0 }.reduce(0, +) / Float(filteredAudio.count))
 
     // 필터링 후 에너지가 너무 낮으면 호루라기 아님
