@@ -110,7 +110,9 @@ extension AudioCaptureManager {
 
       var name: CFString = "" as CFString
       var nameSize = UInt32(MemoryLayout<CFString>.stride)
-      let nameStatus = AudioObjectGetPropertyData(objID, &nameAddress, 0, nil, &nameSize, &name)
+      let nameStatus = withUnsafeMutableBytes(of: &name) { pointer in
+          AudioObjectGetPropertyData(objID, &nameAddress, 0, nil, &nameSize, pointer.baseAddress!)
+      }
 
       guard nameStatus == kAudioHardwareNoError else {
         continue
@@ -201,7 +203,9 @@ extension AudioCaptureManager {
         mElement: kAudioObjectPropertyElementMain
       )
 
-      let status = AudioObjectGetPropertyData(dev, &nameAddress, 0, nil, &nameSize, &name)
+      let status = withUnsafeMutableBytes(of: &name) { pointer in
+          AudioObjectGetPropertyData(dev, &nameAddress, 0, nil, &nameSize, pointer.baseAddress!)
+      }
 
       if status == kAudioHardwareNoError,
          (name as String) == "Full System Audio Capture Device" {
@@ -239,7 +243,9 @@ extension AudioCaptureManager {
         mElement: kAudioObjectPropertyElementMain
       )
 
-      let status = AudioObjectGetPropertyData(dev, &nameAddress, 0, nil, &nameSize, &name)
+      let status = withUnsafeMutableBytes(of: &name) { pointer in
+          AudioObjectGetPropertyData(dev, &nameAddress, 0, nil, &nameSize, pointer.baseAddress!)
+      }
 
       if status == kAudioHardwareNoError,
          (name as String) == "Full System Audio Capture Device" {
@@ -282,7 +288,9 @@ extension AudioCaptureManager {
 
       var tapUID: CFString = "" as CFString
       var tapUIDSize = UInt32(MemoryLayout<CFString>.stride)
-      var status = AudioObjectGetPropertyData(deviceID, &tapUIDAddress, 0, nil, &tapUIDSize, &tapUID)
+      var status = withUnsafeMutableBytes(of: &tapUID) { pointer in
+          AudioObjectGetPropertyData(deviceID, &tapUIDAddress, 0, nil, &tapUIDSize, pointer.baseAddress!)
+      }
 
       if status == kAudioHardwareNoError {
         let tapUIDString = tapUID as String
@@ -302,7 +310,9 @@ extension AudioCaptureManager {
 
       var deviceUID: CFString = "" as CFString
       var uidSize = UInt32(MemoryLayout<CFString>.stride)
-      status = AudioObjectGetPropertyData(deviceID, &deviceUIDAddress, 0, nil, &uidSize, &deviceUID)
+      status = withUnsafeMutableBytes(of: &deviceUID) { pointer in
+          AudioObjectGetPropertyData(deviceID, &deviceUIDAddress, 0, nil, &uidSize, pointer.baseAddress!)
+      }
 
       if status == kAudioHardwareNoError {
         let deviceUIDString = deviceUID as String
@@ -336,7 +346,9 @@ extension AudioCaptureManager {
 
     var tapArray: CFArray?
     var arraySize = propertySize
-    let status = AudioObjectGetPropertyData(deviceID, &tapListAddress, 0, nil, &arraySize, &tapArray)
+    let status = withUnsafeMutableBytes(of: &tapArray) { pointer in
+      AudioObjectGetPropertyData(deviceID, &tapListAddress, 0, nil, &arraySize, pointer.baseAddress!)
+    }
 
     guard status == kAudioHardwareNoError, let taps = tapArray as? [String] else {
       return []
@@ -369,9 +381,9 @@ extension AudioCaptureManager {
 
     // Set empty array to remove all taps
     var emptyArray = [] as CFArray
-    let arraySize = UInt32(MemoryLayout<CFArray>.stride)
-
-    let status = AudioObjectSetPropertyData(deviceID, &tapListAddress, 0, nil, arraySize, &emptyArray)
+    let status = withUnsafeBytes(of: &emptyArray) { pointer in
+      AudioObjectSetPropertyData(deviceID, &tapListAddress, 0, nil, UInt32(pointer.count), pointer.baseAddress!)
+    }
 
     guard status == kAudioHardwareNoError else {
       print("❌ [AudioCaptureManager] Failed to remove taps from aggregate device: \(status)")
