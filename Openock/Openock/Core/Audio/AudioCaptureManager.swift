@@ -108,8 +108,8 @@ class AudioCaptureManager {
     )
     var tapUID: CFString = "" as CFString
     var tapUIDSize = UInt32(MemoryLayout<CFString>.stride)
-    _ = withUnsafeMutablePointer(to: &tapUID) { ptr in
-      AudioObjectGetPropertyData(tapID, &tapUIDAddress, 0, nil, &tapUIDSize, ptr)
+    _ = withUnsafeMutableBytes(of: &tapUID) { pointer in
+        AudioObjectGetPropertyData(tapID, &tapUIDAddress, 0, nil, &tapUIDSize, pointer.baseAddress!)
     }
 
     print("✅ [AudioCaptureManager] Tap UID: \(tapUID as String)")
@@ -123,9 +123,10 @@ class AudioCaptureManager {
 
     let tapUIDString = tapUID as String
     var tapArray = [tapUIDString] as CFArray
-    let tapArraySize = UInt32(MemoryLayout<CFArray>.stride)
 
-    let status = AudioObjectSetPropertyData(deviceID, &tapListAddress, 0, nil, tapArraySize, &tapArray)
+    let status = withUnsafeBytes(of: &tapArray) { pointer in
+        AudioObjectSetPropertyData(deviceID, &tapListAddress, 0, nil, UInt32(pointer.count), pointer.baseAddress!)
+    }
 
     guard status == kAudioHardwareNoError else {
       print("❌ [AudioCaptureManager] Failed to add tap to aggregate device: \(status)")
