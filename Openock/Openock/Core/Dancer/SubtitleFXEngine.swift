@@ -49,7 +49,7 @@ public final class SubtitleFXEngine: ObservableObject {
 
         let minDB     = rules.stepStart   // 30
         let midDB     = rules.stepEnd     // 75
-        let highStart = rules.colorStart  // 75
+        //let highStart = rules.colorStart  // 75
         // let highEnd   = rules.colorEnd // 지금은 안 씀 (3단계는 고정 영역으로)
 
         // -------------------
