@@ -47,7 +47,7 @@ public struct SubtitleFXView: View {
             .onAppear {
                 applyDiff(newText: text)
             }
-            .onChange(of: text) { newValue in
+            .onChange(of: text) { _, newValue in
                 applyDiff(newText: newValue)
             }
     }
@@ -125,7 +125,7 @@ private extension SubtitleFXView {
         // oldChars 의 "문자 인덱스"를 rendered 의 "character index"와 매핑
         // (지금까지는 항상 lastText 길이만큼 rendered에 문자 쌓아왔으므로 1:1 대응)
         var newRendered = AttributedString()
-        var oldCharPos = 0  // lastText / rendered 에서의 문자 인덱스 (0-based)
+        //var oldCharPos = 0  // lastText / rendered 에서의 문자 인덱스 (0-based)
 
         for op in ops {
             switch op {
@@ -135,7 +135,7 @@ private extension SubtitleFXView {
                 let end   = rendered.index(start, offsetByCharacters: 1)
                 let slice = rendered[start..<end]
                 newRendered.append(slice)
-                oldCharPos = oldIndex + 1
+                //oldCharPos = oldIndex + 1
 
             case .insert(let newIndex):
                 // 새로 생긴 글자 → 현재 FX 스타일로 tail 생성
