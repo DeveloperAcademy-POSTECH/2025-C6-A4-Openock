@@ -104,12 +104,12 @@ public final class YAMNetLite {
         let rank = Int(TfLiteTensorNumDims(input))
         switch rank {
         case 1:
-            var dims: [Int32] = [Int32(kExpectedSamples)]
+            let dims: [Int32] = [Int32(kExpectedSamples)]
             _ = dims.withUnsafeBufferPointer {
                 TfLiteInterpreterResizeInputTensor(interpreter, 0, $0.baseAddress, Int32($0.count))
             }
         case 2:
-            var dims: [Int32] = [1, Int32(kExpectedSamples)]
+            let dims: [Int32] = [1, Int32(kExpectedSamples)]
             _ = dims.withUnsafeBufferPointer {
                 TfLiteInterpreterResizeInputTensor(interpreter, 0, $0.baseAddress, Int32($0.count))
             }
@@ -272,7 +272,7 @@ public final class YAMNetLite {
             }
             var div = Float(ch)
             vDSP_vsdiv(mono, 1, &div, &mono, 1, vDSP_Length(frames))
-            mono.withUnsafeMutableBufferPointer { bp in
+            _=mono.withUnsafeMutableBufferPointer { bp in
                 memcpy(ptrs[0], bp.baseAddress!, frames * MemoryLayout<Float>.size)
             }
             out.frameLength = AVAudioFrameCount(frames)
