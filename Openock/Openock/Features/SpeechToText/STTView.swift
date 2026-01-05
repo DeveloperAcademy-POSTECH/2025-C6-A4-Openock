@@ -169,8 +169,6 @@ struct STTView: View {
       
       // ⭐️ 텍스트 영역이 표시될 때 필요한 '최대' 높이를 기준으로 항상 계산합니다.
       let requiredTextHeight = baseTextAreaHeight()
-      
-      let titlebarHeight: CGFloat = isTrafficLightsHidden ? 0 : 8
     
       // 이제 텍스트 영역의 표시 여부와 상관없이 항상 최대 필요 높이를 반환합니다.
       return max(requiredTextHeight + bottomPadding, 1)

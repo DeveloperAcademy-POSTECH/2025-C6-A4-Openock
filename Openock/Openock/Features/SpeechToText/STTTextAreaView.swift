@@ -40,7 +40,7 @@ struct STTTextAreaView: View {
             }
             .clipped()
           }
-          .onChange(of: pipeline.transcript) {_ in
+          .onChange(of: pipeline.transcript) {
             withAnimation(.easeOut(duration: 0.1)) {
               proxy.scrollTo("BOTTOM", anchor: .bottom)
             }
