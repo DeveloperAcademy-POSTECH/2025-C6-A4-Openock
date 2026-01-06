@@ -395,7 +395,7 @@ final class AudioPipeline: ObservableObject {
       let bytes = frames * MemoryLayout<Int32>.size
       for ch in 0..<channels { memcpy(d[ch], s[ch], bytes) }
     default:
-      let srcList = unsafeBitCast(src.audioBufferList, to: UnsafeMutablePointer<AudioBufferList>.self)
+      let srcList = UnsafeMutablePointer(mutating: src.audioBufferList)
       let sABL = UnsafeMutableAudioBufferListPointer(srcList)
       let dABL = UnsafeMutableAudioBufferListPointer(dst.mutableAudioBufferList)
       for i in 0..<sABL.count {

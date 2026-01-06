@@ -31,7 +31,6 @@ class WhistleIndicatorWindow: NSPanel {
     func updatePosition(for mainWindow: NSWindow, animated: Bool = false) {
         let mainFrame = mainWindow.frame
         let indicatorWidth: CGFloat = 120
-        let indicatorHeight: CGFloat = 50
 
         // 메인 창의 우측 상단 바로 위에 위치 계산
         let indicatorX = mainFrame.maxX - indicatorWidth + 10  // 메인 창 오른쪽 끝에 정렬

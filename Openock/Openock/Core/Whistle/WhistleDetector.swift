@@ -123,7 +123,7 @@ class WhistleDetector {
     }
 
     let frameLength = Int(buffer.frameLength)
-    var audioData = Array(UnsafeBufferPointer(start: channelData, count: frameLength))
+    let audioData = Array(UnsafeBufferPointer(start: channelData, count: frameLength))
 
     // 쿨다운 체크 (최근 감지 후 일정 시간 경과 확인) - 하지만 값은 계속 업데이트
     var inCooldown = false
@@ -212,9 +212,8 @@ class WhistleDetector {
       let output = try model.prediction(input: input)
 
       // 9. 결과 분석
-      if let provider = output as? MLFeatureProvider,
-         let outputKey = modelOutputKey,
-         let feature = provider.featureValue(for: outputKey),
+      if let outputKey = modelOutputKey,
+         let feature = output.featureValue(for: outputKey),
          let logits = feature.multiArrayValue,
          logits.count == 2 {
 
@@ -258,7 +257,7 @@ class WhistleDetector {
     }
 
     // Band-pass filter 적용 (호루라기 검증용)
-    var filteredAudio = applyBandPassFilter(audioData, lowCutoff: whistleFreqLow, highCutoff: whistleFreqHigh, sampleRate: Float(currentSampleRate))
+    let filteredAudio = applyBandPassFilter(audioData, lowCutoff: whistleFreqLow, highCutoff: whistleFreqHigh, sampleRate: Float(currentSampleRate))
     let filteredRMS = sqrt(filteredAudio.map { $0 * $0 }.reduce(0, +) / Float(filteredAudio.count))
 
     // 필터링 후 에너지가 너무 낮으면 호루라기 아님
@@ -328,16 +327,14 @@ class WhistleDetector {
     }
 
     var maxStage2Prob: Float = 0.0
-    var bestWindowIndex = 0
 
     // 슬라이딩 윈도우: 최근 1초, 0.7초, 0.5초 세 구간 검사
-    for (index, windowData) in windowsData.enumerated() {
+    for (_, windowData) in windowsData.enumerated() { // Changed (index, windowData) to (_, windowData) since index is no longer used
       let enhancedAudio = enhanceWhistleAudio(windowData.audio, sampleRate: Float(currentSampleRate))
       let prob = runModelPrediction(enhancedAudio)
 
       if prob > maxStage2Prob {
         maxStage2Prob = prob
-        bestWindowIndex = index + 1
       }
     }
 
@@ -472,7 +469,7 @@ class WhistleDetector {
     var audioData = samples
 
     // 리샘플링
-    let currentRate = Double(sampleRate)  // 이미 16000Hz로 가정
+    // 이미 16000Hz로 가정
     if audioData.count != bufferSize {
       // 버퍼 크기 맞추기
       if audioData.count < bufferSize {
@@ -504,9 +501,8 @@ class WhistleDetector {
       let input = WhistleClassifierInput(audio_input: mlArray)
       let output = try model.prediction(input: input)
 
-      guard let provider = output as? MLFeatureProvider,
-            let outputKey = modelOutputKey,
-            let feature = provider.featureValue(for: outputKey),
+      guard let outputKey = modelOutputKey,
+            let feature = output.featureValue(for: outputKey),
             let logits = feature.multiArrayValue,
             logits.count == 2 else {
         return 0.0
@@ -561,28 +557,32 @@ class WhistleDetector {
       paddedSamples = Array(paddedSamples.prefix(fftSize))
     }
 
-    var splitComplex = DSPSplitComplex(realp: &realp, imagp: &imagp)
+    return realp.withUnsafeMutableBufferPointer { realpPtr in
+        imagp.withUnsafeMutableBufferPointer { imagpPtr in
+            var splitComplex = DSPSplitComplex(realp: realpPtr.baseAddress!, imagp: imagpPtr.baseAddress!)
 
-    paddedSamples.withUnsafeBytes { ptr in
-      ptr.bindMemory(to: DSPComplex.self).baseAddress.map {
-        vDSP_ctoz($0, 2, &splitComplex, 1, vDSP_Length(fftSize / 2))
-      }
+            paddedSamples.withUnsafeBytes { ptr in
+              ptr.bindMemory(to: DSPComplex.self).baseAddress.map {
+                vDSP_ctoz($0, 2, &splitComplex, 1, vDSP_Length(fftSize / 2))
+              }
+            }
+
+            vDSP_fft_zrip(fftSetup, &splitComplex, 1, log2n, FFTDirection(FFT_FORWARD))
+
+            var magnitudes = [Float](repeating: 0, count: fftSize / 2)
+            vDSP_zvmags(&splitComplex, 1, &magnitudes, 1, vDSP_Length(fftSize / 2))
+
+            // 고주파 임계값 (1000Hz 이상)
+            let highFreqThreshold = 1000.0
+            let highFreqBin = Int((highFreqThreshold / Double(sampleRate)) * Double(fftSize))
+
+            // 전체 에너지 및 고주파 에너지 계산
+            let totalEnergy = magnitudes.reduce(0, +)
+            let highFreqEnergy = magnitudes[highFreqBin...].reduce(0, +)
+
+            return totalEnergy > 0 ? highFreqEnergy / totalEnergy : 0.0
+        }
     }
-
-    vDSP_fft_zrip(fftSetup, &splitComplex, 1, log2n, FFTDirection(FFT_FORWARD))
-
-    var magnitudes = [Float](repeating: 0, count: fftSize / 2)
-    vDSP_zvmags(&splitComplex, 1, &magnitudes, 1, vDSP_Length(fftSize / 2))
-
-    // 고주파 임계값 (1000Hz 이상)
-    let highFreqThreshold = 1000.0
-    let highFreqBin = Int((highFreqThreshold / Double(sampleRate)) * Double(fftSize))
-
-    // 전체 에너지 및 고주파 에너지 계산
-    let totalEnergy = magnitudes.reduce(0, +)
-    let highFreqEnergy = magnitudes[highFreqBin...].reduce(0, +)
-
-    return totalEnergy > 0 ? highFreqEnergy / totalEnergy : 0.0
   }
 
   /// Find dominant frequency using FFT
@@ -609,32 +609,36 @@ class WhistleDetector {
       paddedSamples = Array(paddedSamples.prefix(fftSize))
     }
 
-    var splitComplex = DSPSplitComplex(realp: &realp, imagp: &imagp)
+    return realp.withUnsafeMutableBufferPointer { realpPtr in
+        imagp.withUnsafeMutableBufferPointer { imagpPtr in
+            var splitComplex = DSPSplitComplex(realp: realpPtr.baseAddress!, imagp: imagpPtr.baseAddress!)
 
-    paddedSamples.withUnsafeBytes { ptr in
-      ptr.bindMemory(to: DSPComplex.self).baseAddress.map {
-        vDSP_ctoz($0, 2, &splitComplex, 1, vDSP_Length(fftSize / 2))
-      }
+            paddedSamples.withUnsafeBytes { ptr in
+                ptr.bindMemory(to: DSPComplex.self).baseAddress.map {
+                    vDSP_ctoz($0, 2, &splitComplex, 1, vDSP_Length(fftSize / 2))
+                }
+            }
+
+            // FFT 수행
+            vDSP_fft_zrip(fftSetup, &splitComplex, 1, log2n, FFTDirection(FFT_FORWARD))
+
+            // 크기(magnitude) 계산
+            var magnitudes = [Float](repeating: 0, count: fftSize / 2)
+            vDSP_zvmags(&splitComplex, 1, &magnitudes, 1, vDSP_Length(fftSize / 2))
+
+            // DC 성분(0Hz) 제거
+            magnitudes[0] = 0
+
+            // 최대 크기를 가진 주파수 찾기
+            var maxMagnitude: Float = 0
+            var maxIndex: vDSP_Length = 0
+            vDSP_maxvi(magnitudes, 1, &maxMagnitude, &maxIndex, vDSP_Length(magnitudes.count))
+
+            // 주파수 계산
+            let frequency = Float(maxIndex) * sampleRate / Float(fftSize)
+            return frequency
+        }
     }
-
-    // FFT 수행
-    vDSP_fft_zrip(fftSetup, &splitComplex, 1, log2n, FFTDirection(FFT_FORWARD))
-
-    // 크기(magnitude) 계산
-    var magnitudes = [Float](repeating: 0, count: fftSize / 2)
-    vDSP_zvmags(&splitComplex, 1, &magnitudes, 1, vDSP_Length(fftSize / 2))
-
-    // DC 성분(0Hz) 제거
-    magnitudes[0] = 0
-
-    // 최대 크기를 가진 주파수 찾기
-    var maxMagnitude: Float = 0
-    var maxIndex: vDSP_Length = 0
-    vDSP_maxvi(magnitudes, 1, &maxMagnitude, &maxIndex, vDSP_Length(magnitudes.count))
-
-    // 주파수 계산
-    let frequency = Float(maxIndex) * sampleRate / Float(fftSize)
-    return frequency
   }
 
   /// Simple resampling (linear interpolation)
