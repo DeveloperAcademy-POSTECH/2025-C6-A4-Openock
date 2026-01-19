@@ -1,6 +1,5 @@
-
-# Created by https://www.toptal.com/developers/gitignore/api/xcode,macos,swift,swiftpackagemanager,cocoapods
-# Edit at https://www.toptal.com/developers/gitignore?templates=xcode,macos,swift,swiftpackagemanager,cocoapods
+# Created by https://www.toptal.com/developers/gitignore/api/macos,swift,xcode,cocoapods
+# Edit at https://www.toptal.com/developers/gitignore?templates=macos,swift,xcode,cocoapods
 
 ### CocoaPods ###
 ## CocoaPods GitIgnore Template
@@ -82,13 +81,13 @@ playground.xcworkspace
 
 # Swift Package Manager
 # Add this line if you want to avoid checking in source code from Swift Package Manager dependencies.
-# Packages/
+Packages/
 # Package.pins
 # Package.resolved
 # *.xcodeproj
 # Xcode automatically generates this directory with a .xcworkspacedata file and xcuserdata
 # hence it is not needed unless you have added a package configuration file to your project
-# .swiftpm
+.swiftpm
 
 .build/
 
@@ -127,9 +126,20 @@ fastlane/test_output
 
 iOSInjectionProject/
 
+### Xcode ###
+
+## Xcode 8 and earlier
+
+### Xcode Patch ###
+*.xcodeproj/*
+!*.xcodeproj/project.pbxproj
+!*.xcodeproj/xcshareddata/
+!*.xcodeproj/project.xcworkspace/
+!*.xcworkspace/contents.xcworkspacedata
+/*.gcno
+**/xcshareddata/WorkspaceSettings.xcsettings
+
 ### Xcode config file ###
 *.xcconfig
-.build/*
 
-
-# End of https://www.toptal.com/developers/gitignore/api/xcode,macos,swift,swiftpackagemanager,cocoapods
+# End of https://www.toptal.com/developers/gitignore/api/xcode,macos,swift,cocoapods

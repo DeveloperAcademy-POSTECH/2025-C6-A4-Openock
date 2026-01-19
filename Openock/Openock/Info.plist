@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>NSAudioCaptureUsageDescription</key>
+	<string>이 앱은 실시간 자막 생성을 위해 내부 오디오를 캡처합니다. 오디오 데이터는 자막 변환 과정에서만 사용되며, 어떠한 형태로도 저장되지 않습니다.</string>
+</dict>
+</plist>
