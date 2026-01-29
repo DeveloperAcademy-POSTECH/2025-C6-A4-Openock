@@ -118,13 +118,12 @@ struct OnboardingView: View {
             }
             .frame(width: 450)
 
-            // 이미지 영역 (페이지 1, 2에서 표시)
-            if currentPage >= 1 {
-                Image(currentPage == 1 ? "onboarding2" : "onboarding3")
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 194, height: 132)
-            }
+            // 이미지 영역 (항상 공간 확보, 페이지 0에서는 투명)
+            Image(currentPage == 2 ? "onboarding3" : "onboarding2")
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: 194, height: 132)
+                .opacity(currentPage >= 1 ? 1 : 0)
         }
         .transition(.move(edge: .top).combined(with: .opacity))
     }
