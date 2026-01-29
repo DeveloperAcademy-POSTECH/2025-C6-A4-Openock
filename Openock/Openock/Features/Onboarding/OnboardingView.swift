@@ -8,39 +8,77 @@
 import SwiftUI
 
 struct OnboardingView: View {
+    @State private var currentPage: Int = 0
+
     var body: some View {
-        VStack {
+        HStack(alignment: .top, spacing: 16) {
+            // 텍스트 + 버튼 영역
             VStack(alignment: .leading, spacing: 8) {
-                Text("BOSO 시작하기")
-                    .font(.system(size: 22, weight: .semibold))
-                    .foregroundStyle(.white)
+                if currentPage == 0 {
+                    Text("BOSO 시작하기")
+                        .font(.system(size: 22, weight: .semibold))
+                        .foregroundStyle(.white)
 
-                Text("화면을 통해 내 Mac에서 나오는 모든 소리가 자막으로 표시됩니다.\n화면에서 마우스가 벗어나면, 모든 버튼은 잠시 후 숨겨집니다.")
-                    .font(.system(size: 13.5, weight: .regular))
-                    .foregroundStyle(.white.opacity(0.88))
-                    .lineSpacing(2)
-                    .fixedSize(horizontal: false, vertical: true)
+                    Text("화면을 통해 내 Mac에서 나오는 모든 소리가 자막으로 표시됩니다.\n화면에서 마우스가 벗어나면, 모든 버튼은 잠시 후 숨겨집니다.")
+                        .font(.system(size: 13.5, weight: .regular))
+                        .foregroundStyle(.white.opacity(0.88))
+                        .lineSpacing(2)
+                        .fixedSize(horizontal: false, vertical: true)
 
-                Text("􀇾 전체 화면 사용 시 자막이 처음에 제한됩니다.")
-                    .font(.system(size: 13, weight: .regular))
-                    .foregroundStyle(.white.opacity(0.85))
+                    Text("􀇾 전체 화면 사용 시 자막이 처음에 제한됩니다.")
+                        .font(.system(size: 13, weight: .regular))
+                        .foregroundStyle(.white.opacity(0.85))
+                } else {
+                    Text("대화를 멈추거나 새로 시작하기")
+                        .font(.system(size: 22, weight: .semibold))
+                        .foregroundStyle(.white)
+
+                    Text("하단 버튼, 또는 스페이스 바를 눌러 자막을 잠시 멈출 수 있습니다.\n다시 시작하면 새로운 대화가 기록됩니다.")
+                        .font(.system(size: 13.5, weight: .regular))
+                        .foregroundStyle(.white.opacity(0.88))
+                        .lineSpacing(2)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    Text("􀇾 새로 시작 시 이전 기록은 자동으로 초기화됩니다.")
+                        .font(.system(size: 13, weight: .regular))
+                        .foregroundStyle(.white.opacity(0.85))
+                }
 
                 HStack(spacing: 8) {
                     Button {
-                        OnboardingWindowManager.shared.hide()
+                        if currentPage == 0 {
+                            OnboardingWindowManager.shared.hide()
+                        } else {
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                currentPage = 0
+                            }
+                        }
                     } label: {
-                        Text("Skip")
+                        Text(currentPage == 0 ? "Skip" : "Back")
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundStyle(.white.opacity(0.9))
-                            .padding(.vertical, 8)
-                            .padding(.horizontal, 12)
+                            .frame(width: 80, height: 29)
+                            .background(
+                                Group {
+                                    if currentPage == 1 {
+                                        Capsule()
+                                            .stroke(.white.opacity(0.5), lineWidth: 1)
+                                    }
+                                }
+                            )
                     }
                     .buttonStyle(.plain)
 
                     Button {
-                        OnboardingWindowManager.shared.hide()
+                        if currentPage == 0 {
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                currentPage = 1
+                            }
+                        } else {
+                            OnboardingWindowManager.shared.hide()
+                        }
                     } label: {
-                        Text("Next")
+                        Text(currentPage == 0 ? "Next" : "Done")
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundStyle(.white)
                             .frame(width: 80, height: 29)
@@ -63,15 +101,17 @@ struct OnboardingView: View {
                     Spacer()
                 }
                 .padding(.top, 12)
-
-            } // 안쪽 VStack 닫는 중괄호
+            }
             .frame(width: 450)
-            .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(.clear)
-            )
 
-        } // 바깥쪽 VStack 닫는 중괄호
+            // 이미지 영역 (페이지 1에서만 표시)
+            if currentPage == 1 {
+                Image("onboarding2")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 194, height: 132)
+            }
+        }
         .transition(.move(edge: .top).combined(with: .opacity))
     }
 }
