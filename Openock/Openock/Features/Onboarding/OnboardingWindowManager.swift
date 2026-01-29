@@ -62,4 +62,34 @@ class OnboardingWindowManager {
         onboardingWindow = nil
         hostingController = nil
     }
+
+    func moveToMenuBar() {
+        guard let window = onboardingWindow,
+              let screen = NSScreen.main else { return }
+
+        // 부모 윈도우에서 연결 해제
+        if let parent = window.parent {
+            parent.removeChildWindow(window)
+        }
+
+        let windowSize = CGSize(width: 321, height: 356)
+        var newOriginX: CGFloat = screen.frame.maxX - windowSize.width - 20
+        let menuBarHeight = NSStatusBar.system.thickness
+
+        // MenuBarExtra 윈도우(NSStatusBarWindow) 찾기
+        for appWindow in NSApplication.shared.windows {
+            let windowClassName = String(describing: type(of: appWindow))
+            if windowClassName.contains("NSStatusBarWindow") {
+                // StatusBar 아이콘의 중앙 위치 계산
+                let statusBarFrame = appWindow.frame
+                newOriginX = statusBarFrame.midX - (windowSize.width / 2)
+                break
+            }
+        }
+
+        // 메뉴바 바로 아래에 위치
+        let newOriginY = screen.frame.maxY - menuBarHeight - windowSize.height - 8
+
+        window.setFrame(CGRect(origin: CGPoint(x: newOriginX, y: newOriginY), size: windowSize), display: true, animate: true)
+    }
 }
