@@ -51,7 +51,14 @@ class OnboardingWindowManager {
     }
 
     func hide() {
-        onboardingWindow?.close()
+        guard let window = onboardingWindow else { return }
+
+        // 부모 윈도우에서 child window 연결 해제
+        if let parent = window.parent {
+            parent.removeChildWindow(window)
+        }
+
+        window.orderOut(nil)
         onboardingWindow = nil
         hostingController = nil
     }
