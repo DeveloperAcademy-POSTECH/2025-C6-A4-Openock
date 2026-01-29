@@ -28,7 +28,7 @@ struct OnboardingView: View {
                     Text("􀇾 전체 화면 사용 시 자막이 처음에 제한됩니다.")
                         .font(.system(size: 13, weight: .regular))
                         .foregroundStyle(.white.opacity(0.85))
-                } else {
+                } else if currentPage == 1 {
                     Text("대화를 멈추거나 새로 시작하기")
                         .font(.system(size: 22, weight: .semibold))
                         .foregroundStyle(.white)
@@ -42,6 +42,20 @@ struct OnboardingView: View {
                     Text("􀇾 새로 시작 시 이전 기록은 자동으로 초기화됩니다.")
                         .font(.system(size: 13, weight: .regular))
                         .foregroundStyle(.white.opacity(0.85))
+                } else {
+                    Text("소리를 눈으로 확인하세요")
+                        .font(.system(size: 22, weight: .semibold))
+                        .foregroundStyle(.white)
+
+                    Text("목소리가 커지면 자막도 커지고 색상이 강조됩니다.\n함성 소리나 호루라기 소리에는 특별한 반응을 보입니다.")
+                        .font(.system(size: 13.5, weight: .regular))
+                        .foregroundStyle(.white.opacity(0.88))
+                        .lineSpacing(2)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    Text("􀇾 설정 > 기능 설정에서 언제든 끄고 켤 수 있습니다.")
+                        .font(.system(size: 13, weight: .regular))
+                        .foregroundStyle(.white.opacity(0.85))
                 }
 
                 HStack(spacing: 8) {
@@ -50,7 +64,7 @@ struct OnboardingView: View {
                             OnboardingWindowManager.shared.hide()
                         } else {
                             withAnimation(.easeInOut(duration: 0.3)) {
-                                currentPage = 0
+                                currentPage -= 1
                             }
                         }
                     } label: {
@@ -60,7 +74,7 @@ struct OnboardingView: View {
                             .frame(width: 80, height: 29)
                             .background(
                                 Group {
-                                    if currentPage == 1 {
+                                    if currentPage >= 1 {
                                         Capsule()
                                             .stroke(.white.opacity(0.5), lineWidth: 1)
                                     }
@@ -70,15 +84,15 @@ struct OnboardingView: View {
                     .buttonStyle(.plain)
 
                     Button {
-                        if currentPage == 0 {
+                        if currentPage < 2 {
                             withAnimation(.easeInOut(duration: 0.3)) {
-                                currentPage = 1
+                                currentPage += 1
                             }
                         } else {
                             OnboardingWindowManager.shared.hide()
                         }
                     } label: {
-                        Text(currentPage == 0 ? "Next" : "Done")
+                        Text(currentPage == 2 ? "Done" : "Next")
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundStyle(.white)
                             .frame(width: 80, height: 29)
@@ -104,9 +118,9 @@ struct OnboardingView: View {
             }
             .frame(width: 450)
 
-            // 이미지 영역 (페이지 1에서만 표시)
-            if currentPage == 1 {
-                Image("onboarding2")
+            // 이미지 영역 (페이지 1, 2에서 표시)
+            if currentPage >= 1 {
+                Image(currentPage == 1 ? "onboarding2" : "onboarding3")
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 194, height: 132)
