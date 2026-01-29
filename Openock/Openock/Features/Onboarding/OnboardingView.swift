@@ -11,7 +11,7 @@ struct OnboardingView: View {
     @State private var currentPage: Int = 0
     
     var body: some View {
-        HStack(alignment: .top, spacing: 16) {
+        HStack(alignment: .bottom) {
             // 텍스트 + 버튼 영역
             VStack(alignment: .leading, spacing: 8) {
                 if currentPage == 0 {
@@ -21,6 +21,7 @@ struct OnboardingView: View {
                     
                     Text("화면을 통해 내 Mac에서 나오는 모든 소리가 자막으로 표시됩니다.\n화면에서 마우스가 벗어나면, 모든 버튼은 잠시 후 숨겨집니다.")
                         .font(.onboardingBody1)
+                        .lineHeight(1.5, fontSize: 16)
                         .foregroundStyle(Color.bsTextBackgroundWhite)
                         .lineSpacing(2)
                         .fixedSize(horizontal: false, vertical: true)
@@ -35,6 +36,7 @@ struct OnboardingView: View {
                     
                     Text("하단 버튼, 또는 스페이스 바를 눌러 자막을 잠시 멈출 수 있습니다.\n다시 시작하면 새로운 대화가 기록됩니다.")
                         .font(.onboardingBody1)
+                        .lineHeight(1.5, fontSize: 16)
                         .foregroundStyle(Color.bsTextBackgroundWhite)
                         .lineSpacing(2)
                         .fixedSize(horizontal: false, vertical: true)
@@ -49,6 +51,7 @@ struct OnboardingView: View {
                     
                     Text("목소리가 커지면 자막도 커지고 색상이 강조됩니다.\n함성 소리나 호루라기 소리에는 특별한 반응을 보입니다.")
                         .font(.onboardingBody1)
+                        .lineHeight(1.5, fontSize: 16)
                         .foregroundStyle(Color.bsTextBackgroundWhite)
                         .lineSpacing(2)
                         .fixedSize(horizontal: false, vertical: true)
@@ -109,33 +112,13 @@ struct OnboardingView: View {
             }
             .frame(width: 450)
             
-            // 이미지 영역 (항상 공간 확보, 페이지 0에서는 투명)
+            // 이미지 영역
             Image(currentPage == 2 ? "onboarding3" : "onboarding2")
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .frame(width: 194, height: 132)
+                .offset(x: -10)
                 .opacity(currentPage >= 1 ? 1 : 0)
         }
-        .transition(.move(edge: .top).combined(with: .opacity))
-    }
-}
-
-private struct CheckboxToggleStyle: ToggleStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        Button {
-            configuration.isOn.toggle()
-        } label: {
-            HStack(spacing: 10) {
-                Image(systemName: configuration.isOn ? "checkmark.square.fill" : "square")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(configuration.isOn ? .white : .white.opacity(0.7))
-                
-                configuration.label
-                
-                Spacer(minLength: 0)
-            }
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
     }
 }
