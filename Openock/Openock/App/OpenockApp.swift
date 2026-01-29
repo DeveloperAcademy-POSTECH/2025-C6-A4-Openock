@@ -13,7 +13,9 @@ struct OpenockApp: App {
   @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
   @StateObject private var pipeline = AudioPipeline()
   @StateObject private var settings  = SettingsManager()
-  @Environment(\.openWindow) private var openWindow
+  
+  // State to hold the main window instance
+  @State private var mainWindow: NSWindow?
 
   // ↓ SwiftUI에서 변경 가능한 상태로 보관 (body 안에서도 대입 가능)
   @State private var onoffManager: OnOffManager? = nil
@@ -25,6 +27,12 @@ struct OpenockApp: App {
             .environmentObject(pipeline)
             .environmentObject(settings)
             .environmentObject(appDelegate)
+            .background(WindowAccessor(onResolve: { window in
+                // Only set the window once.
+                if mainWindow == nil {
+                    mainWindow = window
+                }
+            })) // Capture the window
             .task {
               // AppDelegate에 pipeline 연결
               appDelegate.audioPipeline = pipeline
@@ -34,17 +42,15 @@ struct OpenockApp: App {
                 onoffManager = OnOffManager(pipeline: pipeline, settings: settings)
               }
             }
-            .onAppear {
-                openWindow(id: "onboarding")
+            .onChange(of: mainWindow) { oldWindow, newWindow in
+                // Once the main window is available, show the onboarding window relative to it.
+                if let window = newWindow {
+                    OnboardingWindowManager.shared.show(relativeTo: window)
+                }
             }
     }
     .windowStyle(.hiddenTitleBar)
     .windowToolbarStyle(.unifiedCompact)
-      
-    Window("Welcome to Openock", id: "onboarding") {
-        OnboardingView()
-    }
-    .windowResizability(.contentSize)
 
     // 🔧 여기 수정
     MenuBarExtra {
