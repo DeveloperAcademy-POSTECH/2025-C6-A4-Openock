@@ -127,7 +127,7 @@ struct OnboardingView: View {
                     .opacity(currentPage >= 1 ? 1 : 0)
             }
         } else {
-            // 페이지 3 레이아웃 (메뉴바 하단, 321x356)
+            // 페이지 3 레이아웃 (메뉴바 하단)
             VStack(spacing: 0) {
                 // 상단 이미지
                 Image("onboarding4")
@@ -172,6 +172,52 @@ struct OnboardingView: View {
             }
             .frame(width: 321, height: 356)
             .clipShape(RoundedRectangle(cornerRadius: 15))
+            .padding(.top, 30)
+            .background(alignment: .top) {
+                // 상단 화살표 (메뉴바 아이콘 가리킴) - 뒤에 배치
+                Triangle()
+                    .fill(Color(hex: "#007BB6"))
+                    .frame(width: 48, height: 41)
+            }ㅋㅋ
         }
+    }
+}
+
+// 삼각형 Shape (위쪽을 가리키는 화살표, 둥근 모서리)
+struct Triangle: Shape {
+    var cornerRadius: CGFloat = 2
+
+    func path(in rect: CGRect) -> Path {
+        let points = [
+            CGPoint(x: rect.midX, y: rect.minY),
+            CGPoint(x: rect.maxX, y: rect.maxY),
+            CGPoint(x: rect.minX, y: rect.maxY)
+        ]
+
+        var path = Path()
+        path.move(to: CGPoint(
+            x: points[0].x,
+            y: points[0].y + cornerRadius
+        ))
+
+        for i in 0..<3 {
+            let p1 = points[i]
+            let p2 = points[(i + 1) % 3]
+
+            path.addLine(to: CGPoint(
+                x: p1.x + (p2.x - p1.x) * 0.1,
+                y: p1.y + (p2.y - p1.y) * 0.1
+            ))
+            path.addQuadCurve(
+                to: CGPoint(
+                    x: p1.x + (p2.x - p1.x) * 0.9,
+                    y: p1.y + (p2.y - p1.y) * 0.9
+                ),
+                control: p2
+            )
+        }
+
+        path.closeSubpath()
+        return path
     }
 }
