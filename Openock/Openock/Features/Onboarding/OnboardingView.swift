@@ -174,11 +174,10 @@ struct OnboardingView: View {
             .clipShape(RoundedRectangle(cornerRadius: 15))
             .padding(.top, 30)
             .background(alignment: .top) {
-                // 상단 화살표 (메뉴바 아이콘 가리킴) - 뒤에 배치
                 Triangle()
                     .fill(Color(hex: "#007BB6"))
                     .frame(width: 48, height: 41)
-            }ㅋㅋ
+            }
         }
     }
 }
