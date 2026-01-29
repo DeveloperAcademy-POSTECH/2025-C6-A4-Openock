@@ -10,7 +10,7 @@ import SwiftUI
 struct OnboardingView: View {
     var body: some View {
         VStack {
-            VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: 8) {
                 Text("BOSO 시작하기")
                     .font(.system(size: 22, weight: .semibold))
                     .foregroundStyle(.white)
@@ -18,17 +18,14 @@ struct OnboardingView: View {
                 Text("화면을 통해 내 Mac에서 나오는 모든 소리가 자막으로 표시됩니다.\n화면에서 마우스가 벗어나면, 모든 버튼은 잠시 후 숨겨집니다.")
                     .font(.system(size: 13.5, weight: .regular))
                     .foregroundStyle(.white.opacity(0.88))
-                    .lineSpacing(3)
+                    .lineSpacing(2)
                     .fixedSize(horizontal: false, vertical: true)
 
-                Toggle(isOn: .constant(true)) {
-                    Text("􀇾 전체 화면 사용 시 자막이 처음에 제한됩니다.")
-                        .font(.system(size: 13, weight: .regular))
-                        .foregroundStyle(.white.opacity(0.85))
-                }
-                .padding(.top, 6)
+                Text("􀇾 전체 화면 사용 시 자막이 처음에 제한됩니다.")
+                    .font(.system(size: 13, weight: .regular))
+                    .foregroundStyle(.white.opacity(0.85))
 
-                HStack(spacing: 10) {
+                HStack(spacing: 8) {
                     Button {
                         OnboardingWindowManager.shared.hide()
                     } label: {
@@ -41,14 +38,12 @@ struct OnboardingView: View {
                     .buttonStyle(.plain)
 
                     Button {
-                        // Next -> hide window
                         OnboardingWindowManager.shared.hide()
                     } label: {
                         Text("Next")
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundStyle(.white)
-                            .padding(.vertical, 9)
-                            .padding(.horizontal, 18)
+                            .frame(width: 80, height: 29)
                             .background(
                                 Capsule()
                                     .fill(
@@ -67,21 +62,16 @@ struct OnboardingView: View {
 
                     Spacer()
                 }
-                .padding(.top, 6)
-            }
-            .padding(18)
+                .padding(.top, 12)
+
+            } // 안쪽 VStack 닫는 중괄호
             .frame(width: 450)
             .background(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(.ultraThinMaterial)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .stroke(.white.opacity(0.18), lineWidth: 1)
-                    )
+                    .fill(.clear)
             )
-            .shadow(color: .black.opacity(0.25), radius: 16, x: 0, y: 10)
-            .padding(.horizontal, 18)
-        }
+
+        } // 바깥쪽 VStack 닫는 중괄호
         .transition(.move(edge: .top).combined(with: .opacity))
     }
 }

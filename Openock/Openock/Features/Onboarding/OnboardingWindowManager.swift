@@ -19,8 +19,8 @@ class OnboardingWindowManager {
             
             // Calculate the desired frame
             let parentFrame = parentWindow.frame
-            let newOriginX = parentFrame.origin.x
-            let newOriginY = parentFrame.origin.y + parentFrame.height
+            let newOriginX = parentFrame.minX
+            let newOriginY = parentFrame.origin.y + parentFrame.height + 31
             let contentRect = CGRect(origin: CGPoint(x: newOriginX, y: newOriginY), size: viewSize)
 
             // Create the window with the correct frame and style
