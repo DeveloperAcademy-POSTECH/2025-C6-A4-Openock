@@ -309,7 +309,7 @@
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = M48446ADTD;
 				ENABLE_APP_SANDBOX = YES;
@@ -333,7 +333,7 @@
 					"$(PROJECT_DIR)/Openock/ThirdParty/TFLite/lib/**",
 					"$(PROJECT_DIR)/Openock/ThirdParty/TFLite/lib",
 				);
-				MARKETING_VERSION = 1.1.0;
+				MARKETING_VERSION = 1.2.0;
 				OTHER_LDFLAGS = "-ltensorflowlite_c";
 				PRODUCT_BUNDLE_IDENTIFIER = com.openock.Openock;
 				PRODUCT_NAME = BOSO;
@@ -357,7 +357,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = M48446ADTD;
 				ENABLE_APP_SANDBOX = YES;
@@ -381,7 +381,7 @@
 					"$(PROJECT_DIR)/Openock/ThirdParty/TFLite/lib/**",
 					"$(PROJECT_DIR)/Openock/ThirdParty/TFLite/lib",
 				);
-				MARKETING_VERSION = 1.1.0;
+				MARKETING_VERSION = 1.2.0;
 				OTHER_LDFLAGS = "-ltensorflowlite_c";
 				PRODUCT_BUNDLE_IDENTIFIER = com.openock.Openock;
 				PRODUCT_NAME = BOSO;
