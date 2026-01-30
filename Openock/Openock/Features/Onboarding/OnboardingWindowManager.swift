@@ -2,21 +2,31 @@ import SwiftUI
 
 class OnboardingWindowManager {
     static let shared = OnboardingWindowManager()
-    
+
     private var onboardingWindow: NSWindow?
     private var hostingController: NSHostingController<OnboardingView>?
+    private var overlayWindow: NSWindow?
+    private var parentWindowRef: NSWindow?
 
     private init() {}
 
     func show(relativeTo parentWindow: NSWindow) {
+        parentWindowRef = parentWindow
+
+        // 오버레이 윈도우 생성
+        if overlayWindow == nil {
+            createOverlayWindow()
+        }
+        overlayWindow?.orderFront(nil)
+
         // Create the window and controller only once
         if onboardingWindow == nil {
             let onboardingView = OnboardingView()
             let controller = NSHostingController(rootView: onboardingView)
-            
+
             // Get the ideal size of the SwiftUI view
             let viewSize = controller.view.fittingSize
-            
+
             // Calculate the desired frame
             let parentFrame = parentWindow.frame
             let newOriginX = parentFrame.minX
@@ -30,14 +40,14 @@ class OnboardingWindowManager {
                 backing: .buffered,
                 defer: false
             )
-            
+
             // Configure window properties
             window.isOpaque = false
             window.backgroundColor = .clear
             window.hasShadow = false
             window.level = .floating
             window.contentViewController = controller
-            
+
             // Store references
             self.hostingController = controller
             self.onboardingWindow = window
@@ -48,6 +58,25 @@ class OnboardingWindowManager {
 
         // Show the window
         onboardingWindow?.makeKeyAndOrderFront(nil)
+    }
+
+    private func createOverlayWindow() {
+        guard let screen = NSScreen.main else { return }
+
+        let overlay = NSWindow(
+            contentRect: screen.frame,
+            styleMask: .borderless,
+            backing: .buffered,
+            defer: false
+        )
+
+        overlay.isOpaque = false
+        overlay.backgroundColor = NSColor.black.withAlphaComponent(0.5)
+        overlay.level = .floating - 1
+        overlay.ignoresMouseEvents = true
+        overlay.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+
+        self.overlayWindow = overlay
     }
 
     func hide() {
@@ -61,6 +90,11 @@ class OnboardingWindowManager {
         window.orderOut(nil)
         onboardingWindow = nil
         hostingController = nil
+
+        // 오버레이 윈도우 숨기기
+        overlayWindow?.orderOut(nil)
+        overlayWindow = nil
+        parentWindowRef = nil
     }
 
     func moveToMenuBar() {
