@@ -19,12 +19,10 @@ class OnboardingWindowManager {
         }
         overlayWindow?.orderFront(nil)
 
-        // Create the window and controller only once
         if onboardingWindow == nil {
             let onboardingView = OnboardingView()
             let controller = NSHostingController(rootView: onboardingView)
 
-            // Get the ideal size of the SwiftUI view
             let viewSize = controller.view.fittingSize
 
             // Calculate the desired frame
@@ -41,22 +39,18 @@ class OnboardingWindowManager {
                 defer: false
             )
 
-            // Configure window properties
             window.isOpaque = false
             window.backgroundColor = .clear
             window.hasShadow = false
             window.level = .floating
             window.contentViewController = controller
 
-            // Store references
             self.hostingController = controller
             self.onboardingWindow = window
 
-            // Link the window to its parent
             parentWindow.addChildWindow(window, ordered: .above)
         }
 
-        // Show the window
         onboardingWindow?.makeKeyAndOrderFront(nil)
     }
 
@@ -105,8 +99,9 @@ class OnboardingWindowManager {
         if let parent = window.parent {
             parent.removeChildWindow(window)
         }
-
-        let windowSize = CGSize(width: 321, height: 356)
+        
+        // 메뉴막대 온보딩 윈도우 크기
+        let windowSize = CGSize(width: 321, height: 386)
         var newOriginX: CGFloat = screen.frame.maxX - windowSize.width - 20
         let menuBarHeight = NSStatusBar.system.thickness
 
