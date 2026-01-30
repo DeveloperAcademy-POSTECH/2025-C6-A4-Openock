@@ -8,9 +8,22 @@ class OnboardingWindowManager {
     private var overlayWindow: NSWindow?
     private var parentWindowRef: NSWindow?
 
+    private let hasSeenOnboardingKey = "hasSeenOnboarding"
+
     private init() {}
 
+    private var hasSeenOnboarding: Bool {
+        get { UserDefaults.standard.bool(forKey: hasSeenOnboardingKey) }
+        set { UserDefaults.standard.set(newValue, forKey: hasSeenOnboardingKey) }
+    }
+
     func show(relativeTo parentWindow: NSWindow) {
+        // 테스트용 - 확인 후 삭제
+//        UserDefaults.standard.removeObject(forKey: hasSeenOnboardingKey)
+        
+        // 이미 온보딩을 본 경우 표시하지 않음
+        if hasSeenOnboarding { return }
+
         parentWindowRef = parentWindow
 
         // 오버레이 윈도우 생성
@@ -75,6 +88,9 @@ class OnboardingWindowManager {
 
     func hide() {
         guard let window = onboardingWindow else { return }
+
+        // 온보딩 완료 표시
+        hasSeenOnboarding = true
 
         // 부모 윈도우에서 child window 연결 해제
         if let parent = window.parent {
