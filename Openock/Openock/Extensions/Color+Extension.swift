@@ -75,6 +75,9 @@ extension Color {
   static let bsGrayScale4 = Color(hex: "#EDEDED")
   static let bsGrayScale5 = Color(hex: "#FBFBFB")
   
+  /// onboarding
+  static let bsGrayGlass = Color(hex: "#FBFBFB").opacity(0.3)
+
   /// index
   static let bsIndexRed = Color(hex: "#FF383C")
   static let bsIndexOrange = Color(hex: "#FF8D28")

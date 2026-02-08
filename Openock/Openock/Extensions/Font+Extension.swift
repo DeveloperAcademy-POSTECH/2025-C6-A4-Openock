@@ -12,6 +12,7 @@ extension Font {
     case regular = "SF Pro Text Regular"
     case medium = "SF Pro Text Medium"
     case semibold = "SF Pro Text Semibold"
+    case bold = "SF Pro Text Bold"
     
     /// 폰트 불러오기
     func font(size: CGFloat) -> Font {
@@ -89,6 +90,38 @@ extension Font {
   // 휘슬
   static var bsTag: Font {
     SFPro.medium.font(size: 24)
+  }
+
+  // MARK: - 온보딩 UI
+  
+  /// title 1 - 28pt Bold
+  static var onboardingTitle1: Font {
+    SFPro.bold.font(size: 28)
+  }
+  
+  /// title 2 - 24pt Bold
+  static var onboardingTitle2: Font {
+    SFPro.bold.font(size: 24)
+  }
+  
+  /// body text 1 - 16pt Regular
+  static var onboardingBody1: Font {
+    SFPro.regular.font(size: 16)
+  }
+  
+  /// body text 2 - 12pt Regular
+  static var onboardingBody2: Font {
+    SFPro.regular.font(size: 12)
+  }
+  
+  /// caption - 16pt Semibold
+  static var onboardingCaption: Font {
+    SFPro.semibold.font(size: 16)
+  }
+  
+  /// button text - 13pt Bold
+  static var onboardingButton: Font {
+    SFPro.bold.font(size: 13)
   }
 }
 
